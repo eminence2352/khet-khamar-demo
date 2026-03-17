@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Khet-Khamar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .auth-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      margin: 20px;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .auth-header h1 {
+      color: #2c3e50;
+      font-size: 28px;
+      margin: 0 0 10px 0;
+    }
+
+    .auth-header p {
+      color: #7f8c8d;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-group input {
+      padding: 12px 14px;
+      border: 2px solid #ecf0f1;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #2193b0;
+    }
+
+    .auth-button {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 8px;
+    }
+
+    .auth-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .auth-button:active {
+      transform: translateY(0);
+    }
+
+    .auth-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+
+    .auth-link a {
+      color: #2193b0;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .auth-link a:hover {
+      color: #1a7a96;
+    }
+
+    .error-message {
+      background-color: #fadbd8;
+      color: #c0392b;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .success-message {
+      background-color: #d5f4e6;
+      color: #27ae60;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: 24px;
+      }
+
+      .auth-header h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body data-lang="en">
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>Khet-Khamar</h1>
+      <p data-i18n="appTagline">Farmer Community</p>
+    </div>
+
+    <div class="success-message" id="successMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <form class="auth-form" id="loginForm">
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number</label>
+        <input
+          type="tel"
+          id="mobileNumber"
+          placeholder="01700000000"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="auth-button">Login</button>
+    </form>
+
+    <div class="auth-link">
+      <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const mobileInput = document.getElementById('mobileNumber');
+    const passwordInput = document.getElementById('password');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const mobileNumber = mobileInput.value.trim();
+      const password = passwordInput.value;
+
+      errorMessage.classList.remove('show');
+      successMessage.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobile_number: mobileNumber, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorMessage.textContent = data.message || 'Login failed';
+          errorMessage.classList.add('show');
+          return;
+        }
+
+        successMessage.textContent = 'Login successful! Redirecting...';
+        successMessage.classList.add('show');
+
+        setTimeout(() => {
+          window.location.href = '/index.html';
+        }, 1500);
+      } catch (error) {
+        console.error('Login error:', error);
+        errorMessage.textContent = 'An error occurred. Please try again.';
+        errorMessage.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khet-Khamar Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-lang="en">
+  <header class="top-header">
+    <div class="logo-block">
+      <p class="logo-kicker" data-i18n="appTagline">Farmer Community</p>
+      <h1 class="logo-title">Khet-Khamar</h1>
+    </div>
+    <button id="langToggle" class="lang-toggle" type="button" aria-label="Toggle language">
+      বাংলা
+    </button>
+  </header>
+
+  <main class="main-content marketplace-main">
+    <section class="market-filter" aria-label="Marketplace filters">
+      <div class="market-filter-item search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          type="search"
+          placeholder="Search products"
+          data-i18n-placeholder="marketSearchPlaceholder"
+          aria-label="Search products"
+        />
+      </div>
+
+      <div class="market-filter-item">
+        <label for="categorySelect" data-i18n="category">Category</label>
+        <select id="categorySelect" aria-label="Category">
+          <option value="" data-i18n="allCategories">All Categories</option>
+          <option value="Seeds" data-i18n="categorySeeds">Seeds</option>
+          <option value="Produce" data-i18n="categoryCrops">Crops</option>
+          <option value="Tools" data-i18n="categoryTools">Tools</option>
+          <option value="Fertilizer">Fertilizer</option>
+          <option value="Equipment">Equipment</option>
+        </select>
+      </div>
+
+      <div class="market-filter-item">
+        <label for="locationSelect" data-i18n="location">Location</label>
+        <select id="locationSelect" aria-label="Location">
+          <option value="" data-i18n="allLocations">All Locations</option>
+          <option value="Dhaka">Dhaka</option>
+          <option value="Gazipur">Gazipur</option>
+          <option value="Bogura">Bogura</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="market-grid" aria-label="Marketplace ads"></section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Bottom navigation">
+    <a class="nav-item" href="index.html" aria-label="Home">
+      <i class="fa-solid fa-house"></i>
+      <span data-i18n="home">Home</span>
+    </a>
+    <a class="nav-item active" href="marketplace.html" aria-label="Marketplace">
+      <i class="fa-solid fa-store"></i>
+      <span data-i18n="marketplace">Market</span>
+    </a>
+    <a class="nav-item nav-post" href="#" aria-label="Create post">
+      <i class="fa-solid fa-plus"></i>
+    </a>
+    <a class="nav-item" href="news.html" aria-label="News">
+      <i class="fa-solid fa-newspaper"></i>
+      <span data-i18n="news">News</span>
+    </a>
+    <a class="nav-item" href="#" aria-label="Profile">
+      <i class="fa-solid fa-user"></i>
+      <span data-i18n="profile">Profile</span>
+    </a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

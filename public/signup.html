@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up - Khet-Khamar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .auth-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      margin: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .auth-header h1 {
+      color: #2c3e50;
+      font-size: 28px;
+      margin: 0 0 10px 0;
+    }
+
+    .auth-header p {
+      color: #7f8c8d;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 12px 14px;
+      border: 2px solid #ecf0f1;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #2193b0;
+    }
+
+    .auth-button {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 8px;
+    }
+
+    .auth-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .auth-button:active {
+      transform: translateY(0);
+    }
+
+    .auth-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+
+    .auth-link a {
+      color: #2193b0;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .auth-link a:hover {
+      color: #1a7a96;
+    }
+
+    .error-message {
+      background-color: #fadbd8;
+      color: #c0392b;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .success-message {
+      background-color: #d5f4e6;
+      color: #27ae60;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    @media (max-width: 480px) {
+      .auth-container {
+        padding: 24px;
+      }
+
+      .auth-header h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body data-lang="en">
+  <div class="auth-container">
+    <div class="auth-header">
+      <h1>Khet-Khamar</h1>
+      <p data-i18n="appTagline">Farmer Community</p>
+    </div>
+
+    <div class="success-message" id="successMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <form class="auth-form" id="signupForm">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input
+          type="text"
+          id="fullName"
+          placeholder="Your full name"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number</label>
+        <input
+          type="tel"
+          id="mobileNumber"
+          placeholder="01700000000"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="your@email.com"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="district">District/Location</label>
+        <select id="district" required>
+          <option value="">Select your district</option>
+          <option value="Dhaka">Dhaka</option>
+          <option value="Gazipur">Gazipur</option>
+          <option value="Bogura">Bogura</option>
+          <option value="Chittagong">Chittagong</option>
+          <option value="Khulna">Khulna</option>
+          <option value="Rajshahi">Rajshahi</option>
+          <option value="Sylhet">Sylhet</option>
+          <option value="Barisal">Barisal</option>
+          <option value="Rangpur">Rangpur</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="At least 6 characters"
+          minlength="6"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          placeholder="Confirm your password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="auth-button">Create Account</button>
+    </form>
+
+    <div class="auth-link">
+      <p>Already have an account? <a href="login.html">Login here</a></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('signupForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const mobileNumber = document.getElementById('mobileNumber').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const district = document.getElementById('district').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      errorMessage.classList.remove('show');
+      successMessage.classList.remove('show');
+
+      // Validate inputs
+      if (!fullName || !mobileNumber || !email || !district || !password) {
+        errorMessage.textContent = 'All fields are required';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      if (password.length < 6) {
+        errorMessage.textContent = 'Password must be at least 6 characters';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mobile_number: mobileNumber,
+            email,
+            password,
+            full_name: fullName,
+            district_location: district,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorMessage.textContent = data.message || 'Signup failed';
+          errorMessage.classList.add('show');
+          return;
+        }
+
+        successMessage.textContent = 'Account created successfully! Redirecting...';
+        successMessage.classList.add('show');
+
+        setTimeout(() => {
+          window.location.href = '/index.html';
+        }, 1500);
+      } catch (error) {
+        console.error('Signup error:', error);
+        errorMessage.textContent = 'An error occurred. Please try again.';
+        errorMessage.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

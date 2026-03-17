@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News & Weather - Khet-Khamar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .news-main {
+      padding: 20px;
+    }
+
+    .news-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--primary-light);
+      flex-wrap: wrap;
+    }
+
+    .news-tab {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+
+    .news-tab:hover {
+      color: var(--text-dark);
+    }
+
+    .news-tab.active {
+      color: var(--primary-dark);
+      border-bottom-color: var(--primary-dark);
+    }
+
+    .weather-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 6px 0 14px;
+    }
+
+    .weather-controls label {
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .weather-controls select {
+      border: 1px solid var(--primary-base);
+      background: var(--bg-light);
+      color: var(--text-dark);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .news-content {
+      display: none;
+    }
+
+    .news-content.active {
+      display: block;
+    }
+
+    .weather-container {
+      display: block;
+      margin-top: 10px;
+    }
+
+    .weather-card {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-base) 100%);
+      border-radius: 12px;
+      padding: 24px;
+      color: var(--bg-light);
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(132, 177, 121, 0.25);
+      margin-bottom: 16px;
+    }
+
+    .weather-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+    }
+
+    .weather-icon {
+      font-size: 48px;
+      margin: 12px 0;
+    }
+
+    .weather-temp {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 12px 0;
+    }
+
+    .weather-desc {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 12px;
+    }
+
+    .weather-details {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      justify-content: space-around;
+      font-size: 12px;
+    }
+
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .forecast-day {
+      background: #c7eabb;
+      border: 1px solid #a2cb8b;
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--text-dark);
+    }
+
+    .forecast-date {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #84b179;
+    }
+
+    .forecast-condition {
+      font-size: 13px;
+      margin-bottom: 8px;
+      min-height: 18px;
+    }
+
+    .forecast-temps {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .forecast-meta {
+      font-size: 12px;
+      color: #84b179;
+    }
+
+    .weather-detail {
+      flex: 1;
+    }
+
+    .weather-detail-label {
+      opacity: 0.8;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .weather-detail-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .news-card {
+      background: #e8f5bd;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(132, 177, 121, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #c7eabb;
+    }
+
+    .news-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(132, 177, 121, 0.28);
+    }
+
+    .news-card-header {
+      background: linear-gradient(135deg, #84b179 0%, #a2cb8b 100%);
+      padding: 16px;
+      color: #e8f5bd;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 60px;
+    }
+
+    .news-category-badge {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .news-card-title {
+      font-size: 16px;
+      line-height: 1.4;
+      margin: 0;
+      flex: 1;
+    }
+
+    .news-card-body {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .news-card-excerpt {
+      font-size: 14px;
+      color: var(--text-dark);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      flex: 1;
+    }
+
+    .news-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #c7eabb;
+      font-size: 12px;
+      color: #84b179;
+    }
+
+    .news-source {
+      font-weight: 500;
+    }
+
+    .news-date {
+      font-size: 11px;
+    }
+
+    .news-featured {
+      position: relative;
+    }
+
+    .news-featured::before {
+      content: '★';
+      position: absolute;
+      top: -4px;
+      right: 8px;
+      color: #84b179;
+      font-size: 24px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #84b179;
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      color: #a2cb8b;
+      margin-bottom: 12px;
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      font-size: 14px;
+      color: #84b179;
+    }
+
+    .spinner {
+      border: 3px solid #c7eabb;
+      border-top: 3px solid #84b179;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .news-tabs {
+        margin-bottom: 16px;
+      }
+
+      .news-tab {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+
+      .weather-card {
+        padding: 16px;
+      }
+
+      .news-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .weather-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-lang="en">
+  <header class="top-header">
+    <div class="logo-block">
+      <p class="logo-kicker" data-i18n="appTagline">Farmer Community</p>
+      <h1 class="logo-title">Khet-Khamar</h1>
+    </div>
+    <button id="langToggle" class="lang-toggle" type="button" aria-label="Toggle language">
+      বাংলা
+    </button>
+  </header>
+
+  <main class="main-content news-main">
+    <div class="news-tabs">
+      <button class="news-tab active" data-tab="weather">
+        <i class="fa-solid fa-cloud-sun-rain"></i> Weather
+      </button>
+      <button class="news-tab" data-tab="news">
+        <i class="fa-solid fa-newspaper"></i> Agricultural News
+      </button>
+    </div>
+
+    <!-- Weather Tab -->
+    <div id="weather" class="news-content active">
+      <div class="weather-controls">
+        <label for="weatherAreaSelect">Area</label>
+        <select id="weatherAreaSelect" aria-label="Select area for weather forecast">
+          <option value="Dhaka">Dhaka</option>
+          <option value="Gazipur">Gazipur</option>
+          <option value="Bogura">Bogura</option>
+          <option value="Rajshahi">Rajshahi</option>
+          <option value="Khulna">Khulna</option>
+          <option value="Chattogram">Chattogram</option>
+        </select>
+      </div>
+      <div class="weather-container" id="weatherContainer">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          Loading weather data...
+        </div>
+      </div>
+    </div>
+
+    <!-- News Tab -->
+    <div id="news" class="news-content">
+      <div class="news-grid" id="newsContainer">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          Loading news...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Bottom navigation">
+    <a class="nav-item" href="index.html" aria-label="Home">
+      <i class="fa-solid fa-house"></i>
+      <span data-i18n="home">Home</span>
+    </a>
+    <a class="nav-item" href="marketplace.html" aria-label="Marketplace">
+      <i class="fa-solid fa-store"></i>
+      <span data-i18n="marketplace">Market</span>
+    </a>
+    <a class="nav-item nav-post" href="#" aria-label="Create post">
+      <i class="fa-solid fa-plus"></i>
+    </a>
+    <a class="nav-item active" href="news.html" aria-label="News">
+      <i class="fa-solid fa-newspaper"></i>
+      <span data-i18n="news">News</span>
+    </a>
+    <a class="nav-item" href="#" aria-label="Profile">
+      <i class="fa-solid fa-user"></i>
+      <span data-i18n="profile">Profile</span>
+    </a>
+  </nav>
+
+  <script src="script.js"></script>
+  <script>
+    const tabs = document.querySelectorAll('.news-tab');
+    const contents = document.querySelectorAll('.news-content');
+
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        // Remove active class from all
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+
+        // Add active class to clicked tab and its content
+        tab.classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+
+        // Load data if not already loaded
+        if (tabName === 'weather') {
+          loadWeather();
+        } else if (tabName === 'news') {
+          loadNews();
+        }
+      });
+    });
+
+    // Fetch weather data
+    async function loadWeather() {
+      const container = document.getElementById('weatherContainer');
+      const areaSelect = document.getElementById('weatherAreaSelect');
+      const selectedArea = areaSelect ? areaSelect.value : 'Dhaka';
+
+      try {
+        const response = await fetch(`/api/weather?area=${encodeURIComponent(selectedArea)}&days=14`);
+        if (!response.ok) throw new Error('Failed to fetch weather');
+
+        const weatherData = await response.json();
+
+        if (!weatherData || !Array.isArray(weatherData.forecast) || weatherData.forecast.length === 0) {
+          container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-cloud-exclamation"></i><p>No weather data available</p></div>';
+          return;
+        }
+
+        const current = weatherData.current;
+        const forecastCards = weatherData.forecast
+          .map(day => {
+            const dayDate = new Date(day.date);
+            const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            return `
+              <article class="forecast-day">
+                <div class="forecast-date">${dayName}</div>
+                <div class="forecast-condition">${day.condition}</div>
+                <div class="forecast-temps">${day.maxTemp}° / ${day.minTemp}°</div>
+                <div class="forecast-meta">Rain: ${day.rainfall}mm | Wind: ${day.windSpeed} km/h</div>
+              </article>
+            `;
+          })
+          .join('');
+
+        container.innerHTML = `
+            <div class="weather-card">
+              <h3>${weatherData.area} - ${weatherData.days} Day Forecast</h3>
+              <div class="weather-icon">
+                <i class="fa-solid ${getWeatherIcon(current.condition)}"></i>
+              </div>
+              <div class="weather-temp">${current.temperature}°C</div>
+              <div class="weather-desc">${current.condition}</div>
+              <div class="weather-details">
+                <div class="weather-detail">
+                  <div class="weather-detail-label">Humidity</div>
+                  <div class="weather-detail-value">${current.humidity}%</div>
+                </div>
+                <div class="weather-detail">
+                  <div class="weather-detail-label">Wind</div>
+                  <div class="weather-detail-value">${current.windSpeed} km/h</div>
+                </div>
+                <div class="weather-detail">
+                  <div class="weather-detail-label">Rain</div>
+                  <div class="weather-detail-value">${current.rainfall}mm</div>
+                </div>
+              </div>
+            </div>
+            <section class="forecast-grid">${forecastCards}</section>
+        `;
+      } catch (error) {
+        console.error('Weather error:', error);
+        container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-cloud-exclamation"></i><p>Failed to load weather</p></div>';
+      }
+    }
+
+    // Fetch news data
+    async function loadNews() {
+      const container = document.getElementById('newsContainer');
+
+      try {
+        const response = await fetch('/api/news');
+        if (!response.ok) throw new Error('Failed to fetch news');
+
+        const newsData = await response.json();
+
+        if (Array.isArray(newsData) && newsData.length === 0) {
+          container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1"><i class="fa-solid fa-newspaper"></i><p>No news available</p></div>';
+          return;
+        }
+
+        container.innerHTML = newsData
+          .map(news => {
+            const date = new Date(news.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            });
+            const featuredClass = news.isFeatured ? 'news-featured' : '';
+            const sourceContent = news.url
+              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; font-weight: 700;">${news.source}</a>`
+              : `<span class="news-source">${news.source}</span>`;
+            const titleContent = news.url
+              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">${news.title}</a>`
+              : `${news.title}`;
+            const readLink = news.url
+              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="font-weight: 700; color: #84b179; text-decoration: none;">Read Original</a>`
+              : '';
+            return `
+              <article class="news-card ${featuredClass}">
+                <div class="news-card-header">
+                  <div>
+                    <h3 class="news-card-title">${titleContent}</h3>
+                  </div>
+                  <span class="news-category-badge">${news.category}</span>
+                </div>
+                <div class="news-card-body">
+                  <p class="news-card-excerpt">${news.excerpt || news.content}</p>
+                  <div class="news-card-footer">
+                    ${sourceContent}
+                    <span class="news-date">${date}</span>
+                  </div>
+                  ${readLink}
+                </div>
+              </article>
+            `;
+          })
+          .join('');
+      } catch (error) {
+        console.error('News error:', error);
+        container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load news</p></div>';
+      }
+    }
+
+    // Helper function to get weather icon
+    function getWeatherIcon(condition) {
+      const lowerCondition = condition.toLowerCase();
+      if (lowerCondition.includes('rain')) return 'fa-cloud-rain';
+      if (lowerCondition.includes('cloud')) return 'fa-cloud';
+      if (lowerCondition.includes('sun') || lowerCondition.includes('clear')) return 'fa-sun';
+      if (lowerCondition.includes('wind')) return 'fa-wind';
+      if (lowerCondition.includes('thunder')) return 'fa-cloud-bolt';
+      return 'fa-cloud-sun';
+    }
+
+    // Load initial data
+    const weatherAreaSelect = document.getElementById('weatherAreaSelect');
+
+    if (weatherAreaSelect) {
+      weatherAreaSelect.addEventListener('change', loadWeather);
+    }
+
+    loadWeather();
+  </script>
+</body>
+</html>
