@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Khet-Khamar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2rem;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .admin-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .admin-grid {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .admin-item {
+      border: 1px solid var(--primary-light);
+      border-radius: 0.7rem;
+      background: #ffffff;
+      padding: 0.65rem;
+    }
+
+    .admin-item h4 {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .admin-item p {
+      margin: 0.35rem 0 0;
+      font-size: 0.82rem;
+      color: rgba(51, 51, 51, 0.8);
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 0.45rem;
+      margin-top: 0.45rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="logo-block">
+      <p class="logo-kicker">Admin Portal</p>
+      <h1 class="logo-title">Khet-Khamar</h1>
+    </div>
+    <button id="logoutBtn" class="auth-btn logout" type="button">Logout</button>
+  </header>
+
+  <main class="admin-wrap">
+    <section class="profile-panel">
+      <div class="admin-top">
+        <h2>Role Requests</h2>
+        <button id="refreshRoleRequests" class="action-btn secondary" type="button">Refresh</button>
+      </div>
+      <div id="roleRequestsList" class="admin-grid"></div>
+    </section>
+
+    <section class="profile-panel">
+      <div class="admin-top">
+        <h2>Posts Moderation</h2>
+        <button id="refreshPosts" class="action-btn secondary" type="button">Refresh</button>
+      </div>
+      <div id="postsList" class="admin-grid"></div>
+    </section>
+
+    <section class="profile-panel">
+      <div class="admin-top">
+        <h2>Comments Moderation</h2>
+        <button id="refreshComments" class="action-btn secondary" type="button">Refresh</button>
+      </div>
+      <div id="commentsList" class="admin-grid"></div>
+    </section>
+  </main>
+
+  <script>
+    async function ensureAdmin() {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok) {
+        window.location.href = "admin-login.html";
+        return null;
+      }
+
+      const me = await response.json();
+      if (me.role !== "Admin") {
+        window.location.href = "admin-login.html";
+        return null;
+      }
+
+      return me;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    async function loadRoleRequests() {
+      const container = document.getElementById("roleRequestsList");
+      const response = await fetch("/api/admin/role-requests");
+      if (!response.ok) {
+        container.innerHTML = '<div class="admin-item"><p>Unable to load role requests.</p></div>';
+        return;
+      }
+
+      const rows = await response.json();
+      if (!Array.isArray(rows) || rows.length === 0) {
+        container.innerHTML = '<div class="admin-item"><p>No role requests yet.</p></div>';
+        return;
+      }
+
+      container.innerHTML = rows
+        .map((row) => {
+          const actions = row.status === "pending"
+            ? `<div class="admin-actions">
+                 <button class="action-btn js-approve-role" data-id="${row.id}" type="button">Approve</button>
+                 <button class="action-btn secondary js-reject-role" data-id="${row.id}" type="button">Reject</button>
+               </div>`
+            : "";
+
+          return `<article class="admin-item">
+            <h4>${escapeHtml(row.fullName)} requested ${escapeHtml(row.desiredRole)}</h4>
+            <p>Current role: ${escapeHtml(row.currentRole)} | Location: ${escapeHtml(row.districtLocation || "Unknown")}</p>
+            <p>Status: ${escapeHtml(row.status)}</p>
+            ${actions}
+          </article>`;
+        })
+        .join("");
+
+      container.querySelectorAll(".js-approve-role").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const requestId = Number.parseInt(button.dataset.id, 10);
+          await fetch(`/api/admin/role-requests/${requestId}/respond`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "accept" }),
+          });
+          await loadRoleRequests();
+        });
+      });
+
+      container.querySelectorAll(".js-reject-role").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const requestId = Number.parseInt(button.dataset.id, 10);
+          await fetch(`/api/admin/role-requests/${requestId}/respond`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "reject" }),
+          });
+          await loadRoleRequests();
+        });
+      });
+    }
+
+    async function loadPosts() {
+      const container = document.getElementById("postsList");
+      const response = await fetch("/api/admin/posts");
+      if (!response.ok) {
+        container.innerHTML = '<div class="admin-item"><p>Unable to load posts.</p></div>';
+        return;
+      }
+
+      const rows = await response.json();
+      if (!Array.isArray(rows) || rows.length === 0) {
+        container.innerHTML = '<div class="admin-item"><p>No posts found.</p></div>';
+        return;
+      }
+
+      container.innerHTML = rows
+        .map((row) => `<article class="admin-item">
+          <h4>${escapeHtml(row.fullName)} (${escapeHtml(row.role)})</h4>
+          <p>${escapeHtml(String(row.textContent || "").slice(0, 140) || "[No text]")}</p>
+          <p>Comments: ${Number(row.commentsCount) || 0}</p>
+          <div class="admin-actions">
+            <button class="action-btn secondary js-delete-post" data-id="${row.id}" type="button">Delete Post</button>
+          </div>
+        </article>`)
+        .join("");
+
+      container.querySelectorAll(".js-delete-post").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const postId = Number.parseInt(button.dataset.id, 10);
+          if (!window.confirm("Delete this post?")) {
+            return;
+          }
+          await fetch(`/api/admin/posts/${postId}`, { method: "DELETE" });
+          await loadPosts();
+        });
+      });
+    }
+
+    async function loadComments() {
+      const container = document.getElementById("commentsList");
+      const response = await fetch("/api/admin/comments");
+      if (!response.ok) {
+        container.innerHTML = '<div class="admin-item"><p>Unable to load comments.</p></div>';
+        return;
+      }
+
+      const rows = await response.json();
+      if (!Array.isArray(rows) || rows.length === 0) {
+        container.innerHTML = '<div class="admin-item"><p>No comments found.</p></div>';
+        return;
+      }
+
+      container.innerHTML = rows
+        .map((row) => `<article class="admin-item">
+          <h4>${escapeHtml(row.fullName)}</h4>
+          <p>${escapeHtml(String(row.textContent || "").slice(0, 160))}</p>
+          <p>Post ID: ${row.postId}</p>
+          <div class="admin-actions">
+            <button class="action-btn secondary js-delete-comment" data-id="${row.id}" type="button">Delete Comment</button>
+          </div>
+        </article>`)
+        .join("");
+
+      container.querySelectorAll(".js-delete-comment").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const commentId = Number.parseInt(button.dataset.id, 10);
+          if (!window.confirm("Delete this comment?")) {
+            return;
+          }
+          await fetch(`/api/admin/comments/${commentId}`, { method: "DELETE" });
+          await loadComments();
+        });
+      });
+    }
+
+    async function init() {
+      const me = await ensureAdmin();
+      if (!me) {
+        return;
+      }
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "admin-login.html";
+      });
+
+      document.getElementById("refreshRoleRequests").addEventListener("click", loadRoleRequests);
+      document.getElementById("refreshPosts").addEventListener("click", loadPosts);
+      document.getElementById("refreshComments").addEventListener("click", loadComments);
+
+      await loadRoleRequests();
+      await loadPosts();
+      await loadComments();
+    }
+
+    init();
+  </script>
+</body>
+</html>

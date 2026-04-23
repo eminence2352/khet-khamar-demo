@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile - Khet-Khamar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-lang="en">
+  <header class="top-header">
+    <div class="logo-block">
+      <p class="logo-kicker">Farmer Community</p>
+      <h1 class="logo-title">Khet-Khamar</h1>
+    </div>
+  </header>
+
+  <main id="profilePage" class="main-content profile-main">
+    <section id="profileCard" class="profile-card" aria-label="Profile summary"></section>
+
+    <section id="profileActions" class="profile-actions" aria-label="Profile actions"></section>
+
+    <section class="profile-panel" aria-label="Profile posts">
+      <div class="section-header compact">
+        <h2>Posts</h2>
+      </div>
+      <div id="profilePosts" class="feed-list"></div>
+    </section>
+
+    <section id="connectionRequestsPanel" class="profile-panel" style="display: none;" aria-label="Connection requests">
+      <div class="section-header compact">
+        <h2>Connection Requests</h2>
+      </div>
+      <div class="request-columns">
+        <div>
+          <h3 class="request-heading">Incoming</h3>
+          <div id="incomingRequests" class="request-list"></div>
+        </div>
+        <div>
+          <h3 class="request-heading">Outgoing</h3>
+          <div id="outgoingRequests" class="request-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="connectionsPanel" class="profile-panel" style="display: none;" aria-label="Connections list">
+      <div class="section-header compact">
+        <h2>Connections</h2>
+      </div>
+      <div id="connectionsList" class="request-list"></div>
+    </section>
+
+    <section id="settingsPanel" class="profile-panel" style="display: none;" aria-label="Profile settings">
+      <div class="section-header compact">
+        <h2>Settings</h2>
+      </div>
+      <form id="changePasswordForm" class="settings-form">
+        <label for="currentPassword">Current Password</label>
+        <input id="currentPassword" type="password" required minlength="6" />
+        <label for="newPassword">New Password</label>
+        <input id="newPassword" type="password" required minlength="6" />
+        <button class="action-btn" type="submit">Change Password</button>
+      </form>
+      <hr />
+      <form id="roleRequestForm" class="settings-form">
+        <label for="desiredRole">Apply For Role</label>
+        <select id="desiredRole" required>
+          <option value="">Select role</option>
+          <option value="expert">Expert</option>
+          <option value="seller">Seller</option>
+        </select>
+        <button class="action-btn secondary" type="submit">Submit Role Request</button>
+      </form>
+      <p id="roleRequestStatus" class="activity-meta">No role request submitted yet.</p>
+    </section>
+
+    <section id="adminToolsPanel" class="profile-panel" style="display: none;" aria-label="Admin tools">
+      <div class="section-header compact">
+        <h2>Admin Role Tools</h2>
+      </div>
+      <p class="activity-meta">Grant this user a role directly.</p>
+      <div class="profile-actions">
+        <button id="grantExpertBtn" class="action-btn" type="button">Grant Expert</button>
+        <button id="grantSellerBtn" class="action-btn secondary" type="button">Grant Seller</button>
+      </div>
+    </section>
+
+    <section id="likedPostsPanel" class="profile-panel" style="display: none;" aria-label="Liked posts">
+      <div class="section-header compact">
+        <h2>Posts You Liked</h2>
+      </div>
+      <div id="likedPostsList" class="request-list"></div>
+    </section>
+
+    <section id="commentedPostsPanel" class="profile-panel" style="display: none;" aria-label="Commented posts">
+      <div class="section-header compact">
+        <h2>Posts You Commented On</h2>
+      </div>
+      <div id="commentedPostsList" class="request-list"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Bottom navigation">
+    <a class="nav-item" href="index.html" aria-label="Home">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+    <a class="nav-item" href="marketplace.html" aria-label="Marketplace">
+      <i class="fa-solid fa-store"></i>
+      <span>Market</span>
+    </a>
+    <a class="nav-item nav-post" href="index.html?compose=1" aria-label="Create post">
+      <i class="fa-solid fa-plus"></i>
+    </a>
+    <a class="nav-item" href="news.html" aria-label="News">
+      <i class="fa-solid fa-newspaper"></i>
+      <span>News</span>
+    </a>
+    <a class="nav-item active" href="profile.html" aria-label="Profile">
+      <i class="fa-solid fa-user"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

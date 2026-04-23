@@ -23,9 +23,6 @@
       <h1 class="logo-title">Khet-Khamar</h1>
     </div>
     <div class="header-actions">
-      <button id="langToggle" class="lang-toggle" type="button" aria-label="Toggle language">
-        বাংলা
-      </button>
       <div id="authLinks" class="auth-links">
         <a href="login.html" id="loginLink" class="auth-btn" data-i18n="login" style="display: none;">Login</a>
         <a href="signup.html" id="signupLink" class="auth-btn" data-i18n="signup" style="display: none;">Sign Up</a>
@@ -53,6 +50,10 @@
           ></textarea>
         </label>
       </div>
+      <div id="postImagePreviewWrap" class="composer-image-preview" hidden>
+        <img id="postImagePreview" class="composer-image-preview-img" alt="Selected image preview" />
+        <button id="removePostImage" class="composer-image-remove" type="button">Remove image</button>
+      </div>
       <div class="create-post-actions">
         <label for="postPhoto" class="camera-upload" data-i18n="addPhoto">
           <i class="fa-solid fa-camera"></i>
@@ -61,15 +62,6 @@
         <input id="postPhoto" type="file" accept="image/*" hidden />
         <button class="post-btn" type="button" data-i18n="postBtn">Post</button>
       </div>
-    </section>
-
-    <!-- Agricultural News Section -->
-    <section id="newsSection" class="news-section" aria-label="Agricultural news">
-      <div class="section-header">
-        <h2 data-i18n="agricultureNews">Agriculture News & Updates</h2>
-        <a href="#" class="see-all" data-i18n="seeAll">See All</a>
-      </div>
-      <div id="newsList" class="news-list"></div>
     </section>
 
     <!-- Social Feed -->
@@ -85,14 +77,14 @@
       <i class="fa-solid fa-store"></i>
       <span data-i18n="marketplace">Market</span>
     </a>
-    <a class="nav-item nav-post" href="#" aria-label="Create post">
+    <a class="nav-item nav-post" href="index.html?compose=1" aria-label="Create post">
       <i class="fa-solid fa-plus"></i>
     </a>
     <a class="nav-item" href="news.html" aria-label="News">
       <i class="fa-solid fa-newspaper"></i>
       <span data-i18n="news">News</span>
     </a>
-    <a class="nav-item" href="#" aria-label="Profile">
+    <a class="nav-item" href="profile.html" aria-label="Profile">
       <i class="fa-solid fa-user"></i>
       <span data-i18n="profile">Profile</span>
     </a>

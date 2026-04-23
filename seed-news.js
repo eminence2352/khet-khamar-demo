@@ -10,7 +10,7 @@ async function seedNews() {
   });
 
   try {
-    const [newsCountRows] = await connection.query('SELECT COUNT(*) AS total FROM Agricultural_News');
+    const [newsCountRows] = await connection.query('SELECT COUNT(*) AS total FROM agricultural_news');
     const newsCount = newsCountRows[0].total;
 
     if (newsCount === 0) {
@@ -89,7 +89,7 @@ async function seedNews() {
 
       for (const news of newsData) {
         await connection.query(
-          `INSERT INTO Agricultural_News (title, excerpt, category, source, is_featured, is_active)
+          `INSERT INTO agricultural_news (title, excerpt, category, source, is_featured, is_active)
            VALUES (?, ?, ?, ?, ?, TRUE)`,
           [news.title, news.excerpt, news.category, news.source, news.featured ? 1 : 0]
         );
@@ -97,7 +97,7 @@ async function seedNews() {
 
       console.log(`Seeded ${newsData.length} agricultural news articles.`);
     } else {
-      console.log(`Agricultural_News table already has ${newsCount} articles.`);
+      console.log(`agricultural_news table already has ${newsCount} articles.`);
     }
 
     await connection.end();

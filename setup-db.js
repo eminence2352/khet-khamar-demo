@@ -17,17 +17,24 @@ async function setupDatabase() {
     // Select database
     await conn.changeUser({ database: process.env.DB_NAME });
 
-    // Read and execute schema.sql
+    // Read and execute schema.sql statement by statement for clearer errors.
     const schema = fs.readFileSync('./schema.sql', 'utf8');
-    const statements = schema.split(';').filter(stmt => stmt.trim());
+    const schemaWithoutLineComments = schema
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n');
+
+    const statements = schemaWithoutLineComments
+      .split(';')
+      .map((statement) => statement.trim())
+      .filter((statement) => statement.length > 0);
 
     for (const statement of statements) {
       try {
-        await conn.query(statement + ';');
+        await conn.query(statement);
       } catch (error) {
-        if (!error.message.includes('already exists')) {
-          console.error('Error executing:', statement.substring(0, 50), error.message);
-        }
+        console.error('Failed SQL statement:\n', statement);
+        throw error;
       }
     }
 

@@ -1,0 +1,133 @@
+classDiagram
+    class users {
+        +INT id
+        +VARCHAR mobile_number
+        +VARCHAR email
+        +VARCHAR password_hash
+        +VARCHAR full_name
+        +ENUM role
+        +VARCHAR district_location
+        +VARCHAR profile_picture_path
+        +TEXT bio
+        +BOOLEAN is_verified
+        +BOOLEAN is_active
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class posts {
+        +INT id
+        +INT user_id
+        +ENUM post_type
+        +TEXT text_content
+        +VARCHAR image_path
+        +VARCHAR shared_news_title
+        +TEXT shared_news_excerpt
+        +VARCHAR shared_news_url
+        +VARCHAR shared_news_source
+        +VARCHAR shared_news_category
+        +INT likes_count
+        +BOOLEAN is_active
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class comments {
+        +INT id
+        +INT post_id
+        +INT user_id
+        +TEXT text_content
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class post_likes {
+        +INT id
+        +INT post_id
+        +INT user_id
+        +DATETIME created_at
+    }
+
+    class marketplace_ads {
+        +INT id
+        +INT vendor_id
+        +VARCHAR product_title
+        +TEXT description
+        +DECIMAL price
+        +ENUM category
+        +VARCHAR location
+        +VARCHAR image_path
+        +INT quantity
+        +VARCHAR unit
+        +BOOLEAN is_active
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class reviews {
+        +INT id
+        +INT buyer_id
+        +INT seller_id
+        +INT marketplace_ad_id
+        +TINYINT rating
+        +TEXT review_text
+        +BOOLEAN transaction_passed
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class agricultural_news {
+        +INT id
+        +VARCHAR title
+        +TEXT excerpt
+        +TEXT content
+        +ENUM category
+        +VARCHAR image_url
+        +VARCHAR source
+        +BOOLEAN is_featured
+        +BOOLEAN is_active
+        +DATETIME created_at
+        +DATETIME updated_at
+    }
+
+    class connection_requests {
+        +INT id
+        +INT sender_id
+        +INT receiver_id
+        +ENUM status
+        +DATETIME created_at
+        +DATETIME responded_at
+    }
+
+    class connections {
+        +INT id
+        +INT user_one_id
+        +INT user_two_id
+        +DATETIME created_at
+    }
+
+    class follows {
+        +INT id
+        +INT follower_id
+        +INT expert_id
+        +DATETIME created_at
+    }
+
+    users "1" --> "0..*" posts : creates
+    users "1" --> "0..*" comments : writes
+    posts "1" --> "0..*" comments : has
+    users "1" --> "0..*" post_likes : likes
+    posts "1" --> "0..*" post_likes : liked_by
+
+    users "1" --> "0..*" marketplace_ads : lists as vendor
+
+    users "1" --> "0..*" reviews : buyer_id
+    users "1" --> "0..*" reviews : seller_id
+    marketplace_ads "1" --> "0..*" reviews : reviewed_in
+
+    users "1" --> "0..*" connection_requests : sender_id
+    users "1" --> "0..*" connection_requests : receiver_id
+    users "1" --> "0..*" connections : user_one_id
+    users "1" --> "0..*" connections : user_two_id
+    users "1" --> "0..*" follows : follower_id
+    users "1" --> "0..*" follows : expert_id
