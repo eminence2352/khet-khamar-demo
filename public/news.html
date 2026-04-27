@@ -82,70 +82,133 @@
     }
 
     .weather-container {
-      display: block;
+      display: grid;
+      gap: 14px;
       margin-top: 10px;
     }
 
     .weather-card {
-      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-base) 100%);
-      border-radius: 12px;
-      padding: 24px;
-      color: var(--bg-light);
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(132, 177, 121, 0.25);
-      margin-bottom: 16px;
+      border-radius: 14px;
+      padding: 20px;
+      color: #f4fff2;
+      box-shadow: 0 8px 24px rgba(72, 109, 82, 0.24);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .weather-card h3 {
-      margin: 0 0 12px 0;
-      font-size: 18px;
+    .weather-card.theme-sunny {
+      background: linear-gradient(125deg, #3f8f5f 0%, #84b179 52%, #c7eabb 120%);
+    }
+
+    .weather-card.theme-rainy {
+      background: linear-gradient(125deg, #376177 0%, #4f8ca8 48%, #8ac5db 120%);
+    }
+
+    .weather-card.theme-cloudy {
+      background: linear-gradient(125deg, #4a6470 0%, #698793 48%, #a9bfca 120%);
+    }
+
+    .weather-card.theme-storm {
+      background: linear-gradient(125deg, #384868 0%, #586d94 48%, #8fa8d6 120%);
+    }
+
+    .weather-hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .weather-title {
+      margin: 0;
+      font-size: 19px;
+      font-family: "Manrope", sans-serif;
+      font-weight: 800;
+    }
+
+    .weather-subtitle {
+      margin: 5px 0 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .weather-main {
+      display: flex;
+      gap: 14px;
+      align-items: center;
     }
 
     .weather-icon {
-      font-size: 48px;
-      margin: 12px 0;
+      font-size: 44px;
+      line-height: 1;
     }
 
     .weather-temp {
-      font-size: 36px;
-      font-weight: 700;
-      margin: 12px 0;
+      font-size: 38px;
+      font-weight: 800;
+      font-family: "Manrope", sans-serif;
+      line-height: 1;
+      margin: 0;
     }
 
     .weather-desc {
-      font-size: 14px;
-      opacity: 0.9;
-      margin-bottom: 12px;
+      font-size: 13px;
+      margin-top: 4px;
+      opacity: 0.95;
     }
 
-    .weather-details {
-      display: flex;
-      gap: 24px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-      justify-content: space-around;
-      font-size: 12px;
+    .weather-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.12);
+      margin-top: 8px;
+    }
+
+    .weather-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
     }
 
     .forecast-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 12px;
     }
 
     .forecast-day {
-      background: #c7eabb;
-      border: 1px solid #a2cb8b;
-      border-radius: 10px;
-      padding: 12px;
+      background: linear-gradient(165deg, #edf9d8 0%, #d5efb9 100%);
+      border: 1px solid #b4d59a;
+      border-radius: 11px;
+      padding: 12px 12px 11px;
       color: var(--text-dark);
+      box-shadow: 0 6px 12px rgba(132, 177, 121, 0.12);
+    }
+
+    .forecast-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .forecast-icon {
+      font-size: 20px;
+      color: #658e57;
     }
 
     .forecast-date {
       font-weight: 700;
       font-size: 13px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
       color: #84b179;
     }
 
@@ -157,28 +220,57 @@
 
     .forecast-temps {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
+      font-family: "Manrope", sans-serif;
       margin-bottom: 6px;
     }
 
     .forecast-meta {
       font-size: 12px;
-      color: #84b179;
+      color: #587f4c;
+      line-height: 1.4;
     }
 
     .weather-detail {
-      flex: 1;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.11);
+      min-height: 54px;
     }
 
     .weather-detail-label {
-      opacity: 0.8;
+      opacity: 0.85;
       font-size: 11px;
       margin-bottom: 4px;
     }
 
     .weather-detail-value {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
+      font-family: "Manrope", sans-serif;
+    }
+
+    .weather-outlook {
+      margin-top: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .weather-outlook h4 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .weather-outlook p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
     }
 
     .news-grid {
@@ -330,12 +422,20 @@
         padding: 16px;
       }
 
+      .weather-main {
+        width: 100%;
+      }
+
+      .weather-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .news-grid {
         grid-template-columns: 1fr;
       }
 
       .weather-container {
-        grid-template-columns: 1fr;
+        gap: 10px;
       }
     }
   </style>
@@ -414,10 +514,13 @@
 
   <script src="script.js"></script>
   <script>
+    // ============================================
+    // TAB STATE AND DATA LOADING
+    // ============================================
     const tabs = document.querySelectorAll('.news-tab');
     const contents = document.querySelectorAll('.news-content');
 
-    // Tab switching
+    // Keep tab state and lazy-load the requested section.
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
@@ -439,7 +542,7 @@
       });
     });
 
-    // Fetch weather data
+    // Render weather widget using live API data.
     async function loadWeather() {
       const container = document.getElementById('weatherContainer');
       const areaSelect = document.getElementById('weatherAreaSelect');
@@ -457,30 +560,45 @@
         }
 
         const current = weatherData.current;
+        const themeClass = getWeatherThemeClass(current.condition);
+        const outlookText = getWeatherOutlook(current, weatherData.forecast || []);
         const forecastCards = weatherData.forecast
           .map(day => {
             const dayDate = new Date(day.date);
             const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             return `
               <article class="forecast-day">
-                <div class="forecast-date">${dayName}</div>
+                <div class="forecast-head">
+                  <div class="forecast-date">${dayName}</div>
+                  <i class="fa-solid forecast-icon ${getWeatherIcon(day.condition)}"></i>
+                </div>
                 <div class="forecast-condition">${day.condition}</div>
                 <div class="forecast-temps">${day.maxTemp}° / ${day.minTemp}°</div>
-                <div class="forecast-meta">Rain: ${day.rainfall}mm | Wind: ${day.windSpeed} km/h</div>
+                <div class="forecast-meta">Rain: ${day.rainfall} mm<br />Wind: ${day.windSpeed} km/h</div>
               </article>
             `;
           })
           .join('');
 
         container.innerHTML = `
-            <div class="weather-card">
-              <h3>${weatherData.area} - ${weatherData.days} Day Forecast</h3>
-              <div class="weather-icon">
-                <i class="fa-solid ${getWeatherIcon(current.condition)}"></i>
+            <div class="weather-card ${themeClass}">
+              <div class="weather-hero">
+                <div>
+                  <h3 class="weather-title">${weatherData.area} Weather Outlook</h3>
+                  <p class="weather-subtitle">${weatherData.days} day forecast for farm planning</p>
+                </div>
+                <div class="weather-main">
+                  <div class="weather-icon">
+                    <i class="fa-solid ${getWeatherIcon(current.condition)}"></i>
+                  </div>
+                  <div>
+                    <div class="weather-temp">${current.temperature}°C</div>
+                    <div class="weather-desc">${current.condition}</div>
+                    <div class="weather-badge"><i class="fa-solid fa-location-dot"></i> ${weatherData.area}</div>
+                  </div>
+                </div>
               </div>
-              <div class="weather-temp">${current.temperature}°C</div>
-              <div class="weather-desc">${current.condition}</div>
-              <div class="weather-details">
+              <div class="weather-metrics">
                 <div class="weather-detail">
                   <div class="weather-detail-label">Humidity</div>
                   <div class="weather-detail-value">${current.humidity}%</div>
@@ -491,8 +609,16 @@
                 </div>
                 <div class="weather-detail">
                   <div class="weather-detail-label">Rain</div>
-                  <div class="weather-detail-value">${current.rainfall}mm</div>
+                  <div class="weather-detail-value">${current.rainfall} mm</div>
                 </div>
+                <div class="weather-detail">
+                  <div class="weather-detail-label">Forecast Span</div>
+                  <div class="weather-detail-value">${weatherData.days} Days</div>
+                </div>
+              </div>
+              <div class="weather-outlook">
+                <h4>Farming Outlook</h4>
+                <p>${outlookText}</p>
               </div>
             </div>
             <section class="forecast-grid">${forecastCards}</section>
@@ -503,7 +629,7 @@
       }
     }
 
-    // Fetch news data
+    // Render agricultural news cards.
     async function loadNews() {
       const container = document.getElementById('newsContainer');
 
@@ -574,9 +700,16 @@
       }
     }
 
-    // Helper function to get weather icon
+    // ============================================
+    // WEATHER DISPLAY HELPERS
+    // ============================================
+    function normalizeWeatherCondition(condition) {
+      return String(condition || '').toLowerCase();
+    }
+
+    // Match weather text to an icon class.
     function getWeatherIcon(condition) {
-      const lowerCondition = condition.toLowerCase();
+      const lowerCondition = normalizeWeatherCondition(condition);
       if (lowerCondition.includes('rain')) return 'fa-cloud-rain';
       if (lowerCondition.includes('cloud')) return 'fa-cloud';
       if (lowerCondition.includes('sun') || lowerCondition.includes('clear')) return 'fa-sun';
@@ -585,6 +718,39 @@
       return 'fa-cloud-sun';
     }
 
+    function getWeatherThemeClass(condition) {
+      const lowerCondition = normalizeWeatherCondition(condition);
+      if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) return 'theme-storm';
+      if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) return 'theme-rainy';
+      if (lowerCondition.includes('cloud') || lowerCondition.includes('fog')) return 'theme-cloudy';
+      return 'theme-sunny';
+    }
+
+    // Turn raw weather readings into farmer-friendly advice text.
+    function getWeatherOutlook(current, forecast) {
+      const rainToday = Number(current.rainfall) || 0;
+      const windToday = Number(current.windSpeed) || 0;
+      const humidity = Number(current.humidity) || 0;
+      const maxRain = Math.max(...(forecast || []).map(day => Number(day.rainfall) || 0), 0);
+
+      if (rainToday >= 10 || maxRain >= 15) {
+        return 'Heavy rain risk detected. Prioritize drainage checks, delay spraying, and protect seedbeds from waterlogging.';
+      }
+
+      if (windToday >= 28) {
+        return 'Strong wind conditions expected. Secure lightweight structures and avoid pesticide spraying during peak wind hours.';
+      }
+
+      if (humidity >= 85) {
+        return 'Humidity is high, which may increase fungal pressure. Monitor leaves for early disease signs and improve field airflow.';
+      }
+
+      return 'Conditions look stable for routine field work. Good window for irrigation planning, light fertilization, and transplant care.';
+    }
+
+    // ============================================
+    // EVENT WIRING
+    // ============================================
     // Load initial data
     const weatherAreaSelect = document.getElementById('weatherAreaSelect');
     const newsContainer = document.getElementById('newsContainer');

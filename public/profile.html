@@ -59,30 +59,6 @@
       <div id="connectionsList" class="request-list"></div>
     </section>
 
-    <section id="settingsPanel" class="profile-panel" style="display: none;" aria-label="Profile settings">
-      <div class="section-header compact">
-        <h2>Settings</h2>
-      </div>
-      <form id="changePasswordForm" class="settings-form">
-        <label for="currentPassword">Current Password</label>
-        <input id="currentPassword" type="password" required minlength="6" />
-        <label for="newPassword">New Password</label>
-        <input id="newPassword" type="password" required minlength="6" />
-        <button class="action-btn" type="submit">Change Password</button>
-      </form>
-      <hr />
-      <form id="roleRequestForm" class="settings-form">
-        <label for="desiredRole">Apply For Role</label>
-        <select id="desiredRole" required>
-          <option value="">Select role</option>
-          <option value="expert">Expert</option>
-          <option value="seller">Seller</option>
-        </select>
-        <button class="action-btn secondary" type="submit">Submit Role Request</button>
-      </form>
-      <p id="roleRequestStatus" class="activity-meta">No role request submitted yet.</p>
-    </section>
-
     <section id="adminToolsPanel" class="profile-panel" style="display: none;" aria-label="Admin tools">
       <div class="section-header compact">
         <h2>Admin Role Tools</h2>
@@ -91,6 +67,7 @@
       <div class="profile-actions">
         <button id="grantExpertBtn" class="action-btn" type="button">Grant Expert</button>
         <button id="grantSellerBtn" class="action-btn secondary" type="button">Grant Seller</button>
+        <button id="removeRoleBtn" class="action-btn secondary" type="button">Remove Role</button>
       </div>
     </section>
 

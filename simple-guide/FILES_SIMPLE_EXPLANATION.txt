@@ -1,0 +1,100 @@
+KHET-KHAMAR PROJECT: SIMPLE FILE GUIDE
+(For someone without a technical background)
+
+How to read this:
+- JS files = app logic (what the app does)
+- HTML files = app pages (what people see)
+- CSS files = app look and design (how it looks)
+
+==================================================
+JAVASCRIPT (JS) FILES
+==================================================
+
+1) server.js
+Short meaning: The main brain of the app.
+Simple explanation: It runs in the background and handles login, posts, profiles, admin actions, weather, news, and marketplace data.
+
+2) setup-db.js
+Short meaning: Database starter setup.
+Simple explanation: Helps create or prepare the database tables so the app can store data correctly.
+
+3) seed.js
+Short meaning: Demo data loader.
+Simple explanation: Adds sample users/posts so the app is not empty when you start it.
+
+4) seed-news.js
+Short meaning: News demo data loader.
+Simple explanation: Adds sample agricultural news so the news page has content.
+
+5) seed-marketplace.js
+Short meaning: Marketplace demo data loader.
+Simple explanation: Adds sample products/listings so the market page can show items.
+
+6) public/script.js
+Short meaning: Main website behavior file.
+Simple explanation: Controls buttons, forms, feed actions, profile actions, settings actions, and page interactions in the browser.
+
+==================================================
+HTML FILES (PAGES USERS OPEN)
+==================================================
+
+1) public/index.html
+Short meaning: Home feed page.
+Simple explanation: Main page where users see posts and can share updates.
+
+2) public/login.html
+Short meaning: User login page.
+Simple explanation: Page where normal users sign in.
+
+3) public/signup.html
+Short meaning: User registration page.
+Simple explanation: Page where new users create an account.
+
+4) public/profile.html
+Short meaning: Profile page.
+Simple explanation: Shows user profile info, activity, and profile-related actions.
+
+5) public/marketplace.html
+Short meaning: Marketplace page.
+Simple explanation: Shows products/listings for buy/sell activities.
+
+6) public/news.html
+Short meaning: News and weather page.
+Simple explanation: Shows agricultural news and weather forecast details.
+
+7) public/admin-login.html
+Short meaning: Admin login page.
+Simple explanation: Separate sign-in page only for admin access.
+
+8) public/admin.html
+Short meaning: Admin dashboard page.
+Simple explanation: Lets admin manage users, roles, posts, comments, and requests.
+
+9) public/settings.html
+Short meaning: Settings main menu.
+Simple explanation: Small hub page with links to account settings tasks.
+
+10) public/settings-password.html
+Short meaning: Password reset settings page.
+Simple explanation: Lets logged-in users change their password.
+
+11) public/settings-role.html
+Short meaning: Role request settings page.
+Simple explanation: Lets users apply for Expert or Seller role.
+
+==================================================
+CSS FILES (LOOK AND STYLE)
+==================================================
+
+1) public/style.css
+Short meaning: Main visual design file.
+Simple explanation: Controls colors, spacing, fonts, cards, buttons, badges, layout, and responsive behavior across pages.
+
+==================================================
+ONE-LINE SUMMARY
+==================================================
+- server.js = app engine
+- script.js = page behavior
+- HTML files = screens
+- style.css = visual appearance
+- setup/seed files = database preparation and sample content

@@ -1,3 +1,6 @@
+// ============================================
+// LANGUAGE + UI TEXT
+// ============================================
 const dictionary = {
   en: {
     appTagline: "Farmer Community",
@@ -46,6 +49,9 @@ function applyEnglishLanguage() {
 
 applyEnglishLanguage();
 
+// ============================================
+// AUTH STATE + SHARED HELPERS
+// ============================================
 const authState = {
   checked: false,
   authenticated: false,
@@ -53,6 +59,55 @@ const authState = {
 };
 
 let currentUserProfile = null;
+
+function showNotice(message, type = "info") {
+  const text = String(message || "Something went wrong.").trim() || "Something went wrong.";
+  let host = document.getElementById("appNoticeHost");
+
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "appNoticeHost";
+    host.className = "app-notice-host";
+    document.body.appendChild(host);
+  }
+
+  host.innerHTML = "";
+
+  const notice = document.createElement("div");
+  notice.className = `app-notice app-notice-${type}`;
+  notice.setAttribute("role", type === "error" ? "alert" : "status");
+  notice.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+
+  const textNode = document.createElement("p");
+  textNode.className = "app-notice-text";
+  textNode.textContent = text;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "app-notice-close";
+  closeBtn.textContent = "OK";
+
+  const dismiss = () => {
+    notice.classList.remove("show");
+    window.setTimeout(() => {
+      if (host && host.contains(notice)) {
+        host.removeChild(notice);
+      }
+    }, 180);
+  };
+
+  closeBtn.addEventListener("click", dismiss);
+
+  notice.appendChild(textNode);
+  notice.appendChild(closeBtn);
+  host.appendChild(notice);
+
+  window.requestAnimationFrame(() => {
+    notice.classList.add("show");
+  });
+
+  window.setTimeout(dismiss, type === "error" ? 4200 : 2800);
+}
 
 async function getAuthState(forceRefresh = false) {
   if (authState.checked && !forceRefresh) {
@@ -155,6 +210,17 @@ function feedPostUrl(postId) {
   return `index.html?postId=${encodeURIComponent(postId)}`;
 }
 
+function formatRoleLabel(role) {
+  const normalized = String(role || "").trim().toLowerCase();
+  if (normalized === "verified expert") {
+    return "Expert";
+  }
+  if (normalized === "general vendor") {
+    return "Seller";
+  }
+  return role || "User";
+}
+
 function renderPosts(posts, container) {
   if (!container) {
     return;
@@ -175,9 +241,11 @@ function renderPosts(posts, container) {
       const avatarClass = index % 2 === 0 ? "avatar-a" : "avatar-b";
       const profileUrl = profileUrlForUser(post.userId);
       const textContent = escapeHtml(post.textContent || "");
-      const expertTag = post.userRole === "Verified Expert"
-        ? '<span class="expert-share-tag">Expert Share</span>'
-        : "";
+      const roleTag = post.userRole === "Verified Expert"
+        ? '<span class="expert-share-tag">Expert</span>'
+        : post.userRole === "General Vendor"
+          ? '<span class="seller-share-tag">Seller</span>'
+          : "";
 
       let postBody = "";
       if (post.postType === "news_share") {
@@ -218,7 +286,7 @@ function renderPosts(posts, container) {
           </a>
           <div class="post-user-meta">
             <h2 class="post-user"><a class="post-profile-link" href="${profileUrl}">${userName}</a></h2>
-            <p class="post-time">${createdText} ${expertTag}</p>
+            <p class="post-time">${createdText} ${roleTag}</p>
           </div>
         </header>
         ${postBody}
@@ -233,6 +301,7 @@ function renderPosts(posts, container) {
     .join("");
 }
 
+// Highlight a target post when opening feed with a postId query parameter.
 function focusPostInFeed(postId, container) {
   if (!container || !Number.isInteger(postId) || postId <= 0) {
     return;
@@ -345,6 +414,9 @@ function renderMarketplaceAds(ads, marketplaceGrid) {
     .join("");
 }
 
+// ============================================
+// FEED PAGE
+// ============================================
 function initFeedPage() {
   const feedList = document.querySelector(".feed-list");
   const postBtn = document.querySelector(".post-btn");
@@ -417,7 +489,7 @@ function initFeedPage() {
 
     if (!String(file.type || "").startsWith("image/")) {
       clearImagePreview({ clearInput: true });
-      alert("Please select a valid image file.");
+      showNotice("Please select a valid image file.", "error");
       return;
     }
 
@@ -527,14 +599,14 @@ function initFeedPage() {
         const response = await fetch(`/api/posts/${postId}/like`, { method: "POST" });
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to update like.");
+          showNotice(data.message || "Failed to update like.", "error");
           return;
         }
 
         await fetchPosts({ container: feedList, targetPostId: postId });
       } catch (error) {
         console.error(error);
-        alert("Failed to update like.");
+        showNotice("Failed to update like.", "error");
       }
       return;
     }
@@ -559,7 +631,7 @@ function initFeedPage() {
 
       const trimmedComment = String(commentText).trim();
       if (!trimmedComment) {
-        alert("Comment cannot be empty.");
+        showNotice("Comment cannot be empty.", "error");
         return;
       }
 
@@ -571,14 +643,14 @@ function initFeedPage() {
         });
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to add comment.");
+          showNotice(data.message || "Failed to add comment.", "error");
           return;
         }
 
         await fetchPosts({ container: feedList, targetPostId: postId });
       } catch (error) {
         console.error(error);
-        alert("Failed to add comment.");
+        showNotice("Failed to add comment.", "error");
       }
       return;
     }
@@ -590,7 +662,7 @@ function initFeedPage() {
 
     const me = await getCurrentUserProfile();
     if (!me || me.role !== "Admin") {
-      alert("Admin access required.");
+      showNotice("Admin access required.", "error");
       return;
     }
 
@@ -610,14 +682,14 @@ function initFeedPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || "Failed to delete post.");
+        showNotice(data.message || "Failed to delete post.", "error");
         return;
       }
 
       await fetchPosts({ container: feedList });
     } catch (error) {
       console.error(error);
-      alert("Failed to delete post.");
+      showNotice("Failed to delete post.", "error");
     }
   });
 
@@ -627,7 +699,7 @@ function initFeedPage() {
         await submitComposerPost();
       } catch (error) {
         console.error(error);
-        alert("Could not publish post.");
+        showNotice("Could not publish post.", "error");
       }
     });
   }
@@ -653,7 +725,7 @@ function initFeedPage() {
         }
       } catch (error) {
         console.error(error);
-        alert("Could not publish post.");
+        showNotice("Could not publish post.", "error");
       }
     });
   }
@@ -694,6 +766,9 @@ function initFeedPage() {
   }
 }
 
+// ============================================
+// MARKETPLACE PAGE
+// ============================================
 function initMarketplacePage() {
   const marketplaceGrid = document.querySelector(".market-grid");
   if (!marketplaceGrid) {
@@ -766,16 +841,19 @@ function renderProfileSummary(profile) {
   }
 
   const initials = escapeHtml(getAvatarInitials(profile.fullName));
-  const verifiedBadge = profile.isVerified
-    ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>'
-    : "";
+  const roleBadge = profile.role === "Verified Expert"
+    ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Expert</span>'
+    : profile.role === "General Vendor"
+      ? '<span class="seller-badge"><i class="fa-solid fa-store"></i> Seller</span>'
+      : "";
+  const roleLabel = escapeHtml(formatRoleLabel(profile.role));
 
   profileCard.innerHTML = `
     <div class="profile-card-top">
       <div class="avatar avatar-owner">${initials}</div>
       <div>
         <h2 class="profile-name">${escapeHtml(profile.fullName)}</h2>
-        <p class="profile-role">${escapeHtml(profile.role)} • ${escapeHtml(profile.districtLocation || "Unknown location")} ${verifiedBadge}</p>
+        <p class="profile-role">${roleLabel} • ${escapeHtml(profile.districtLocation || "Unknown location")} ${roleBadge}</p>
       </div>
     </div>
     <p class="profile-bio">${escapeHtml(profile.bio || "No bio yet.")}</p>
@@ -797,7 +875,7 @@ function renderProfileActions(profile, refreshProfile) {
   profileActions.innerHTML = "";
 
   if (profile.isOwnProfile) {
-    profileActions.innerHTML = '<span class="action-btn secondary">This is your profile</span>';
+    profileActions.innerHTML = '<a class="action-btn" href="settings.html">Settings</a>';
     return;
   }
 
@@ -822,11 +900,11 @@ function renderProfileActions(profile, refreshProfile) {
 
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to send connection request.");
+          showNotice(data.message || "Failed to send connection request.", "error");
           return;
         }
 
-        alert("Connection request sent.");
+        showNotice("Connection request sent.", "success");
         await refreshProfile();
       });
       profileActions.appendChild(connectBtn);
@@ -849,7 +927,7 @@ function renderProfileActions(profile, refreshProfile) {
         });
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to cancel request.");
+          showNotice(data.message || "Failed to cancel request.", "error");
           return;
         }
         await refreshProfile();
@@ -869,7 +947,7 @@ function renderProfileActions(profile, refreshProfile) {
         });
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to accept request.");
+          showNotice(data.message || "Failed to accept request.", "error");
           return;
         }
         await refreshProfile();
@@ -886,7 +964,7 @@ function renderProfileActions(profile, refreshProfile) {
         });
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message || "Failed to discard request.");
+          showNotice(data.message || "Failed to discard request.", "error");
           return;
         }
         await refreshProfile();
@@ -905,7 +983,7 @@ function renderProfileActions(profile, refreshProfile) {
       const response = await fetch(`/api/follows/${profile.id}`, { method: "POST" });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || "Failed to update follow.");
+        showNotice(data.message || "Failed to update follow.", "error");
         return;
       }
       await refreshProfile();
@@ -996,6 +1074,9 @@ function renderOutgoingRequestList(container, rows, onCancel) {
   });
 }
 
+// ============================================
+// PROFILE PAGE
+// ============================================
 async function initProfilePage() {
   const profileRoot = document.getElementById("profilePage");
   if (!profileRoot) {
@@ -1021,17 +1102,14 @@ async function initProfilePage() {
   const incomingRequests = document.getElementById("incomingRequests");
   const outgoingRequests = document.getElementById("outgoingRequests");
   const connectionsList = document.getElementById("connectionsList");
-  const settingsPanel = document.getElementById("settingsPanel");
-  const changePasswordForm = document.getElementById("changePasswordForm");
   const likedPostsPanel = document.getElementById("likedPostsPanel");
   const likedPostsList = document.getElementById("likedPostsList");
   const commentedPostsPanel = document.getElementById("commentedPostsPanel");
   const commentedPostsList = document.getElementById("commentedPostsList");
-  const roleRequestForm = document.getElementById("roleRequestForm");
-  const roleRequestStatus = document.getElementById("roleRequestStatus");
   const adminToolsPanel = document.getElementById("adminToolsPanel");
   const grantExpertBtn = document.getElementById("grantExpertBtn");
   const grantSellerBtn = document.getElementById("grantSellerBtn");
+  const removeRoleBtn = document.getElementById("removeRoleBtn");
 
   const me = await getCurrentUserProfile();
 
@@ -1053,7 +1131,6 @@ async function initProfilePage() {
 
     if (connectionRequestsPanel) connectionRequestsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (connectionsPanel) connectionsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
-    if (settingsPanel) settingsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (likedPostsPanel) likedPostsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (commentedPostsPanel) commentedPostsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (adminToolsPanel) adminToolsPanel.style.display = canGrant ? "block" : "none";
@@ -1062,33 +1139,6 @@ async function initProfilePage() {
       await loadConnectionRequests();
       await loadConnections();
       await loadMyActivity();
-      await loadRoleRequestStatus();
-    }
-  }
-
-  async function loadRoleRequestStatus() {
-    if (!roleRequestStatus) {
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/settings/role-request");
-      if (!response.ok) {
-        roleRequestStatus.textContent = "Unable to load role request status.";
-        return;
-      }
-
-      const data = await response.json();
-      const latest = data.latestRequest;
-      if (!latest) {
-        roleRequestStatus.textContent = "No role request submitted yet.";
-        return;
-      }
-
-      roleRequestStatus.textContent = `Latest request: ${latest.desiredRole} (${latest.status})`;
-    } catch (error) {
-      console.error(error);
-      roleRequestStatus.textContent = "Unable to load role request status.";
     }
   }
 
@@ -1110,7 +1160,7 @@ async function initProfilePage() {
       });
       const dataAction = await responseAction.json();
       if (!responseAction.ok) {
-        alert(dataAction.message || "Failed to respond to request.");
+        showNotice(dataAction.message || "Failed to respond to request.", "error");
         await refreshProfile();
         return;
       }
@@ -1123,7 +1173,7 @@ async function initProfilePage() {
       });
       const dataCancel = await responseCancel.json();
       if (!responseCancel.ok) {
-        alert(dataCancel.message || "Failed to cancel request.");
+        showNotice(dataCancel.message || "Failed to cancel request.", "error");
         await refreshProfile();
         return;
       }
@@ -1231,40 +1281,149 @@ async function initProfilePage() {
     }
   }
 
-  if (changePasswordForm) {
-    changePasswordForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const currentPasswordInput = document.getElementById("currentPassword");
-      const newPasswordInput = document.getElementById("newPassword");
-
-      const currentPassword = currentPasswordInput ? currentPasswordInput.value : "";
-      const newPassword = newPasswordInput ? newPasswordInput.value : "";
-
-      if (!currentPassword || !newPassword) {
-        alert("Please fill in both password fields.");
+  async function grantRoleFromAdmin(desiredRole) {
+    try {
+      const response = await fetch(`/api/admin/users/${viewedUserId}/role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ desiredRole }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to grant role.", "error");
         return;
       }
 
-      try {
-        const response = await fetch("/api/settings/change-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currentPassword, newPassword }),
-        });
-        const data = await response.json();
+      showNotice("Role granted successfully.", "success");
+      await refreshProfile();
+    } catch (error) {
+      console.error(error);
+      showNotice("Failed to grant role.", "error");
+    }
+  }
 
-        if (!response.ok) {
-          alert(data.message || "Failed to change password.");
-          return;
-        }
+  if (grantExpertBtn) {
+    grantExpertBtn.addEventListener("click", () => grantRoleFromAdmin("expert"));
+  }
 
-        alert("Password changed successfully.");
-        changePasswordForm.reset();
-      } catch (error) {
-        console.error(error);
-        alert("Failed to change password.");
+  if (grantSellerBtn) {
+    grantSellerBtn.addEventListener("click", () => grantRoleFromAdmin("seller"));
+  }
+
+  if (removeRoleBtn) {
+    removeRoleBtn.addEventListener("click", () => grantRoleFromAdmin("farmer"));
+  }
+
+  await refreshProfile();
+}
+
+// ============================================
+// SETTINGS PAGES
+// ============================================
+async function initSettingsHomePage() {
+  const settingsHome = document.getElementById("settingsHomePage");
+  if (!settingsHome) {
+    return;
+  }
+
+  await getAuthState();
+  if (!authState.authenticated) {
+    settingsHome.innerHTML = '<section class="profile-panel"><p>Please login to access settings.</p><a class="action-btn" href="login.html">Login</a></section>';
+  }
+}
+
+async function initChangePasswordPage() {
+  const changePasswordPage = document.getElementById("changePasswordPage");
+  if (!changePasswordPage) {
+    return;
+  }
+
+  await getAuthState();
+  if (!authState.authenticated) {
+    changePasswordPage.innerHTML = '<section class="profile-panel"><p>Please login to change password.</p><a class="action-btn" href="login.html">Login</a></section>';
+    return;
+  }
+
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  if (!changePasswordForm) {
+    return;
+  }
+
+  changePasswordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const currentPasswordInput = document.getElementById("currentPassword");
+    const newPasswordInput = document.getElementById("newPassword");
+
+    const currentPassword = currentPasswordInput ? currentPasswordInput.value : "";
+    const newPassword = newPasswordInput ? newPasswordInput.value : "";
+
+    if (!currentPassword || !newPassword) {
+      showNotice("Please fill in both password fields.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/settings/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        showNotice(data.message || "Failed to change password.", "error");
+        return;
       }
-    });
+
+      showNotice("Password changed successfully.", "success");
+      changePasswordForm.reset();
+    } catch (error) {
+      console.error(error);
+      showNotice("Failed to change password.", "error");
+    }
+  });
+}
+
+async function initRoleRequestPage() {
+  const roleRequestPage = document.getElementById("roleRequestPage");
+  if (!roleRequestPage) {
+    return;
+  }
+
+  await getAuthState();
+  if (!authState.authenticated) {
+    roleRequestPage.innerHTML = '<section class="profile-panel"><p>Please login to apply for a role.</p><a class="action-btn" href="login.html">Login</a></section>';
+    return;
+  }
+
+  const roleRequestStatus = document.getElementById("roleRequestStatus");
+  const roleRequestForm = document.getElementById("roleRequestForm");
+
+  async function loadRoleRequestStatus() {
+    if (!roleRequestStatus) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/settings/role-request");
+      if (!response.ok) {
+        roleRequestStatus.textContent = "Unable to load role request status.";
+        return;
+      }
+
+      const data = await response.json();
+      const latest = data.latestRequest;
+      if (!latest) {
+        roleRequestStatus.textContent = "No role request submitted yet.";
+        return;
+      }
+
+      const roleLabel = formatRoleLabel(latest.desiredRole);
+      roleRequestStatus.textContent = `Latest request: ${roleLabel} (${latest.status})`;
+    } catch (error) {
+      console.error(error);
+      roleRequestStatus.textContent = "Unable to load role request status.";
+    }
   }
 
   if (roleRequestForm) {
@@ -1274,7 +1433,7 @@ async function initProfilePage() {
       const desiredRole = roleSelect ? roleSelect.value : "";
 
       if (!desiredRole) {
-        alert("Please select a role.");
+        showNotice("Please select a role.", "error");
         return;
       }
 
@@ -1287,51 +1446,26 @@ async function initProfilePage() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.message || "Failed to submit role request.");
+          showNotice(data.message || "Failed to submit role request.", "error");
           return;
         }
 
-        alert("Role request submitted to admin.");
+        showNotice("Role request submitted to admin.", "success");
         await loadRoleRequestStatus();
       } catch (error) {
         console.error(error);
-        alert("Failed to submit role request.");
+        showNotice("Failed to submit role request.", "error");
       }
     });
   }
 
-  async function grantRoleFromAdmin(desiredRole) {
-    try {
-      const response = await fetch(`/api/admin/users/${viewedUserId}/role`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ desiredRole }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.message || "Failed to grant role.");
-        return;
-      }
-
-      alert("Role granted successfully.");
-      await refreshProfile();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to grant role.");
-    }
-  }
-
-  if (grantExpertBtn) {
-    grantExpertBtn.addEventListener("click", () => grantRoleFromAdmin("expert"));
-  }
-
-  if (grantSellerBtn) {
-    grantSellerBtn.addEventListener("click", () => grantRoleFromAdmin("seller"));
-  }
-
-  await refreshProfile();
+  await loadRoleRequestStatus();
 }
 
 initFeedPage();
 initMarketplacePage();
 initProfilePage();
+initSettingsHomePage();
+initChangePasswordPage();
+initRoleRequestPage();
+

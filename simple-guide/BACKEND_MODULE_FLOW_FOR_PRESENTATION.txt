@@ -1,0 +1,40 @@
+BACKEND MODULE FLOW (PRESENTATION VERSION)
+
+What changed:
+- Before: one very large server.js handled everything.
+- Now: server.js is small and only wires modules.
+
+New backend structure:
+
+1) server.js
+- Entry point only
+- Connects app setup + DB + middleware + route modules
+
+2) src/config/
+- app.js: express app + session + static files
+- database.js: MySQL pool and connection
+- upload.js: image upload rules
+
+3) src/middleware/
+- auth.js: checks user/admin access
+- errorHandler.js: central error handling
+
+4) src/helpers/
+- roles.js: role conversion logic (expert/seller/farmer)
+- connections.js: connection relation helper logic
+
+5) src/routes/
+- authRoutes.js: signup/login/logout/admin login/auth check
+- feedRoutes.js: posts, likes, comments
+- profileRoutes.js: profile view, connections, follows, activity
+- settingsRoutes.js: change password, role request
+- adminRoutes.js: role approvals, user role control, moderation
+- marketplaceRoutes.js: marketplace listing fetch
+- weatherRoutes.js: weather API and fallback
+- newsRoutes.js: news fetch and share-to-feed
+
+How to explain in 20 seconds:
+- server.js now acts like a manager.
+- each file in src/routes handles one feature area.
+- this makes code easier to read, debug, and present.
+- if one feature breaks, we can check one small file instead of a giant file.

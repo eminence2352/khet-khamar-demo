@@ -14,9 +14,19 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     .admin-wrap {
-      max-width: 980px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 1rem 1rem 2rem;
+      padding: 1rem 1rem 2.3rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .admin-hero {
+      border: 1px solid var(--primary-base);
+      border-radius: 1rem;
+      background: linear-gradient(130deg, #f8ffef 0%, #ffffff 65%);
+      box-shadow: 0 12px 26px rgba(96, 134, 74, 0.08);
+      padding: 0.95rem;
       display: grid;
       gap: 0.9rem;
     }
@@ -25,8 +35,61 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.7rem;
       flex-wrap: wrap;
+    }
+
+    .admin-top h2 {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      font-size: 1.2rem;
+    }
+
+    .admin-subtext {
+      margin: 0.25rem 0 0;
+      font-size: 0.84rem;
+      color: rgba(51, 51, 51, 0.74);
+    }
+
+    .admin-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+
+    .summary-card {
+      border: 1px solid var(--primary-light);
+      border-radius: 0.8rem;
+      background: #ffffff;
+      padding: 0.7rem;
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .summary-card p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: rgba(51, 51, 51, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+
+    .summary-card strong {
+      font-size: 1.45rem;
+      font-family: "Manrope", sans-serif;
+      line-height: 1;
+    }
+
+    .admin-main-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1.3fr 1fr;
+    }
+
+    .admin-col {
+      display: grid;
+      gap: 1rem;
     }
 
     .admin-grid {
@@ -36,14 +99,16 @@
 
     .admin-item {
       border: 1px solid var(--primary-light);
-      border-radius: 0.7rem;
+      border-radius: 0.75rem;
       background: #ffffff;
-      padding: 0.65rem;
+      padding: 0.72rem;
     }
 
-    .admin-item h4 {
+    .admin-item-title {
       margin: 0;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
+      font-weight: 800;
+      font-family: "Manrope", sans-serif;
     }
 
     .admin-item p {
@@ -52,11 +117,92 @@
       color: rgba(51, 51, 51, 0.8);
     }
 
+    .admin-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .admin-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--primary-light);
+      background: #f8ffef;
+      padding: 0.16rem 0.52rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #3a4a3f;
+    }
+
+    .admin-chip.pending {
+      background: #fff7df;
+      border-color: #e5c871;
+      color: #7f5a00;
+    }
+
+    .admin-chip.approved {
+      background: #eaf9ef;
+      border-color: #98cfac;
+      color: #246d40;
+    }
+
+    .admin-chip.rejected {
+      background: #ffeceb;
+      border-color: #efb2ae;
+      color: #8b322b;
+    }
+
     .admin-actions {
       display: flex;
       gap: 0.45rem;
-      margin-top: 0.45rem;
+      margin-top: 0.55rem;
       flex-wrap: wrap;
+    }
+
+    .admin-filter-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr auto;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .admin-filter-row input,
+    .admin-filter-row select {
+      border: 1px solid var(--primary-base);
+      border-radius: 0.65rem;
+      padding: 0.48rem 0.62rem;
+      font-family: inherit;
+      background: #ffffff;
+    }
+
+    .admin-empty {
+      margin: 0;
+      font-size: 0.84rem;
+      color: rgba(51, 51, 51, 0.76);
+    }
+
+    .action-btn.danger {
+      background: #ffffff;
+      color: #8b2a2a;
+      border-color: #d89f9f;
+    }
+
+    @media (max-width: 980px) {
+      .admin-main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .admin-summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-filter-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -66,36 +212,112 @@
       <p class="logo-kicker">Admin Portal</p>
       <h1 class="logo-title">Khet-Khamar</h1>
     </div>
-    <button id="logoutBtn" class="auth-btn logout" type="button">Logout</button>
+    <div class="profile-actions">
+      <button id="refreshAllBtn" class="action-btn secondary" type="button">Refresh All</button>
+      <button id="logoutBtn" class="auth-btn logout" type="button">Logout</button>
+    </div>
   </header>
 
   <main class="admin-wrap">
-    <section class="profile-panel">
+    <section class="admin-hero">
       <div class="admin-top">
-        <h2>Role Requests</h2>
-        <button id="refreshRoleRequests" class="action-btn secondary" type="button">Refresh</button>
+        <div>
+          <h2>Admin Dashboard</h2>
+          <p class="admin-subtext">Manage role requests and moderate platform content in one place.</p>
+        </div>
       </div>
-      <div id="roleRequestsList" class="admin-grid"></div>
+      <div class="admin-summary-grid">
+        <article class="summary-card">
+          <p>Pending Role Requests</p>
+          <strong id="pendingRolesCount">0</strong>
+        </article>
+        <article class="summary-card">
+          <p>Users Loaded</p>
+          <strong id="usersCount">0</strong>
+        </article>
+        <article class="summary-card">
+          <p>Total Posts Loaded</p>
+          <strong id="postsCount">0</strong>
+        </article>
+        <article class="summary-card">
+          <p>Total Comments Loaded</p>
+          <strong id="commentsCount">0</strong>
+        </article>
+      </div>
     </section>
 
-    <section class="profile-panel">
-      <div class="admin-top">
-        <h2>Posts Moderation</h2>
-        <button id="refreshPosts" class="action-btn secondary" type="button">Refresh</button>
-      </div>
-      <div id="postsList" class="admin-grid"></div>
-    </section>
+    <section class="admin-main-grid">
+      <div class="admin-col">
+        <section class="profile-panel">
+          <div class="admin-top">
+            <h2>User Management</h2>
+            <button id="refreshUsers" class="action-btn secondary" type="button">Refresh</button>
+          </div>
+          <div class="admin-filter-row">
+            <input id="usersSearchInput" type="search" placeholder="Search by name, mobile, or email" />
+            <select id="usersRoleFilter">
+              <option value="">All Roles</option>
+              <option value="Farmer">Farmer</option>
+              <option value="Verified Expert">Expert</option>
+              <option value="General Vendor">Seller</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <button id="applyUsersFilter" class="action-btn" type="button">Apply</button>
+          </div>
+          <div id="usersList" class="admin-grid"></div>
+        </section>
 
-    <section class="profile-panel">
-      <div class="admin-top">
-        <h2>Comments Moderation</h2>
-        <button id="refreshComments" class="action-btn secondary" type="button">Refresh</button>
+        <section class="profile-panel">
+          <div class="admin-top">
+            <h2>Role Requests</h2>
+            <button id="refreshRoleRequests" class="action-btn secondary" type="button">Refresh</button>
+          </div>
+          <div id="roleRequestsList" class="admin-grid"></div>
+        </section>
       </div>
-      <div id="commentsList" class="admin-grid"></div>
+
+      <div class="admin-col">
+        <section class="profile-panel">
+          <div class="admin-top">
+            <h2>Posts Moderation</h2>
+            <button id="refreshPosts" class="action-btn secondary" type="button">Refresh</button>
+          </div>
+          <div id="postsList" class="admin-grid"></div>
+        </section>
+
+        <section class="profile-panel">
+          <div class="admin-top">
+            <h2>Comments Moderation</h2>
+            <button id="refreshComments" class="action-btn secondary" type="button">Refresh</button>
+          </div>
+          <div id="commentsList" class="admin-grid"></div>
+        </section>
+      </div>
     </section>
   </main>
 
   <script>
+    // ============================================
+    // ADMIN UTILITIES
+    // ============================================
+    function normalizeRoleLabel(role) {
+      if (role === "Verified Expert") {
+        return "Expert";
+      }
+      if (role === "General Vendor") {
+        return "Seller";
+      }
+      return role || "User";
+    }
+
+    function statusClass(status) {
+      const normalized = String(status || "").toLowerCase();
+      if (normalized === "pending") return "pending";
+      if (normalized === "approved") return "approved";
+      if (normalized === "rejected") return "rejected";
+      return "";
+    }
+
     async function ensureAdmin() {
       const response = await fetch("/api/auth/me");
       if (!response.ok) {
@@ -121,34 +343,76 @@
         .replace(/'/g, "&#39;");
     }
 
+    async function postJson(url, payload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      return { response, data };
+    }
+
+    async function applyRoleUpdate(userId, desiredRole, successMessage) {
+      const { response, data } = await postJson(`/api/admin/users/${userId}/role`, { desiredRole });
+      if (!response.ok) {
+        alert(data.message || "Failed to update role.");
+        return false;
+      }
+
+      if (successMessage) {
+        alert(successMessage);
+      }
+      return true;
+    }
+
+    // ============================================
+    // ROLE REQUESTS + USER ROLES
+    // ============================================
     async function loadRoleRequests() {
       const container = document.getElementById("roleRequestsList");
+      const pendingCountEl = document.getElementById("pendingRolesCount");
+
       const response = await fetch("/api/admin/role-requests");
       if (!response.ok) {
         container.innerHTML = '<div class="admin-item"><p>Unable to load role requests.</p></div>';
+        if (pendingCountEl) pendingCountEl.textContent = "0";
         return;
       }
 
       const rows = await response.json();
-      if (!Array.isArray(rows) || rows.length === 0) {
+      const safeRows = Array.isArray(rows) ? rows : [];
+      const pendingCount = safeRows.filter((row) => String(row.status || "") === "pending").length;
+      if (pendingCountEl) pendingCountEl.textContent = String(pendingCount);
+
+      if (safeRows.length === 0) {
         container.innerHTML = '<div class="admin-item"><p>No role requests yet.</p></div>';
         return;
       }
 
-      container.innerHTML = rows
+      container.innerHTML = safeRows
         .map((row) => {
-          const actions = row.status === "pending"
-            ? `<div class="admin-actions">
-                 <button class="action-btn js-approve-role" data-id="${row.id}" type="button">Approve</button>
-                 <button class="action-btn secondary js-reject-role" data-id="${row.id}" type="button">Reject</button>
-               </div>`
+          const requestedRole = normalizeRoleLabel(row.desiredRole);
+          const currentRole = normalizeRoleLabel(row.currentRole);
+          const canRemoveRole = row.currentRole !== "Farmer" && row.currentRole !== "Admin";
+          const pendingActions = row.status === "pending"
+            ? `<button class="action-btn js-approve-role" data-id="${row.id}" type="button">Approve</button>
+               <button class="action-btn secondary js-reject-role" data-id="${row.id}" type="button">Reject</button>`
+            : "";
+          const removeAction = canRemoveRole
+            ? `<button class="action-btn danger js-remove-role" data-user-id="${row.userId}" type="button">Remove Role</button>`
             : "";
 
           return `<article class="admin-item">
-            <h4>${escapeHtml(row.fullName)} requested ${escapeHtml(row.desiredRole)}</h4>
-            <p>Current role: ${escapeHtml(row.currentRole)} | Location: ${escapeHtml(row.districtLocation || "Unknown")}</p>
-            <p>Status: ${escapeHtml(row.status)}</p>
-            ${actions}
+            <h4 class="admin-item-title">${escapeHtml(row.fullName)} requested ${escapeHtml(requestedRole)}</h4>
+            <div class="admin-meta-row">
+              <span class="admin-chip">Current: ${escapeHtml(currentRole)}</span>
+              <span class="admin-chip ${statusClass(row.status)}">${escapeHtml(row.status)}</span>
+              <span class="admin-chip">${escapeHtml(row.districtLocation || "Unknown location")}</span>
+            </div>
+            <p>Mobile: ${escapeHtml(row.mobileNumber || "N/A")}</p>
+            <div class="admin-actions">${pendingActions}${removeAction}</div>
           </article>`;
         })
         .join("");
@@ -156,11 +420,14 @@
       container.querySelectorAll(".js-approve-role").forEach((button) => {
         button.addEventListener("click", async () => {
           const requestId = Number.parseInt(button.dataset.id, 10);
-          await fetch(`/api/admin/role-requests/${requestId}/respond`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "accept" }),
+          const { response, data } = await postJson(`/api/admin/role-requests/${requestId}/respond`, {
+            action: "accept",
           });
+          if (!response.ok) {
+            alert(data.message || "Failed to approve role request.");
+            return;
+          }
+
           await loadRoleRequests();
         });
       });
@@ -168,35 +435,149 @@
       container.querySelectorAll(".js-reject-role").forEach((button) => {
         button.addEventListener("click", async () => {
           const requestId = Number.parseInt(button.dataset.id, 10);
-          await fetch(`/api/admin/role-requests/${requestId}/respond`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "reject" }),
+          const { response, data } = await postJson(`/api/admin/role-requests/${requestId}/respond`, {
+            action: "reject",
           });
+          if (!response.ok) {
+            alert(data.message || "Failed to reject role request.");
+            return;
+          }
+
           await loadRoleRequests();
+        });
+      });
+
+      container.querySelectorAll(".js-remove-role").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const userId = Number.parseInt(button.dataset.userId, 10);
+          if (!window.confirm("Remove role and set user back to Farmer?")) {
+            return;
+          }
+
+          const ok = await applyRoleUpdate(userId, "farmer", "Role removed successfully.");
+          if (ok) {
+            await loadRoleRequests();
+          }
         });
       });
     }
 
-    async function loadPosts() {
-      const container = document.getElementById("postsList");
-      const response = await fetch("/api/admin/posts");
+    async function loadUsers() {
+      const usersList = document.getElementById("usersList");
+      const usersCountEl = document.getElementById("usersCount");
+      const searchValue = String(document.getElementById("usersSearchInput")?.value || "").trim();
+      const roleValue = String(document.getElementById("usersRoleFilter")?.value || "").trim();
+      const query = new URLSearchParams();
+
+      if (searchValue) {
+        query.set("search", searchValue);
+      }
+      if (roleValue) {
+        query.set("role", roleValue);
+      }
+
+      const response = await fetch(`/api/admin/users?${query.toString()}`);
       if (!response.ok) {
-        container.innerHTML = '<div class="admin-item"><p>Unable to load posts.</p></div>';
+        usersList.innerHTML = '<div class="admin-item"><p class="admin-empty">Unable to load users.</p></div>';
+        if (usersCountEl) usersCountEl.textContent = "0";
         return;
       }
 
       const rows = await response.json();
-      if (!Array.isArray(rows) || rows.length === 0) {
+      const safeRows = Array.isArray(rows) ? rows : [];
+      if (usersCountEl) usersCountEl.textContent = String(safeRows.length);
+
+      if (safeRows.length === 0) {
+        usersList.innerHTML = '<div class="admin-item"><p class="admin-empty">No users found for current filter.</p></div>';
+        return;
+      }
+
+      usersList.innerHTML = safeRows
+        .map((row) => {
+          const canRemoveRole = row.role !== "Farmer" && row.role !== "Admin";
+          const roleActions = row.role === "Admin"
+            ? ""
+            : `<button class="action-btn js-make-expert" data-user-id="${row.id}" type="button">Make Expert</button>
+               <button class="action-btn secondary js-make-seller" data-user-id="${row.id}" type="button">Make Seller</button>
+               ${canRemoveRole ? `<button class="action-btn danger js-make-farmer" data-user-id="${row.id}" type="button">Remove Role</button>` : ""}`;
+
+          return `<article class="admin-item">
+            <h4 class="admin-item-title">${escapeHtml(row.fullName || "Unknown User")}</h4>
+            <div class="admin-meta-row">
+              <span class="admin-chip">${escapeHtml(normalizeRoleLabel(row.role))}</span>
+              <span class="admin-chip">${escapeHtml(row.districtLocation || "Unknown location")}</span>
+            </div>
+            <p>Mobile: ${escapeHtml(row.mobileNumber || "N/A")}</p>
+            <p>Email: ${escapeHtml(row.email || "N/A")}</p>
+            <div class="admin-actions">${roleActions}</div>
+          </article>`;
+        })
+        .join("");
+
+      usersList.querySelectorAll(".js-make-expert").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const userId = Number.parseInt(button.dataset.userId, 10);
+          const ok = await applyRoleUpdate(userId, "expert", "User is now Expert.");
+          if (ok) {
+            await Promise.all([loadUsers(), loadRoleRequests()]);
+          }
+        });
+      });
+
+      usersList.querySelectorAll(".js-make-seller").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const userId = Number.parseInt(button.dataset.userId, 10);
+          const ok = await applyRoleUpdate(userId, "seller", "User is now Seller.");
+          if (ok) {
+            await Promise.all([loadUsers(), loadRoleRequests()]);
+          }
+        });
+      });
+
+      usersList.querySelectorAll(".js-make-farmer").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const userId = Number.parseInt(button.dataset.userId, 10);
+          if (!window.confirm("Remove role and set this user to Farmer?")) {
+            return;
+          }
+          const ok = await applyRoleUpdate(userId, "farmer", "Role removed successfully.");
+          if (ok) {
+            await Promise.all([loadUsers(), loadRoleRequests()]);
+          }
+        });
+      });
+    }
+
+    // ============================================
+    // CONTENT MODERATION
+    // ============================================
+    async function loadPosts() {
+      const container = document.getElementById("postsList");
+      const postsCountEl = document.getElementById("postsCount");
+
+      const response = await fetch("/api/admin/posts");
+      if (!response.ok) {
+        container.innerHTML = '<div class="admin-item"><p>Unable to load posts.</p></div>';
+        if (postsCountEl) postsCountEl.textContent = "0";
+        return;
+      }
+
+      const rows = await response.json();
+      const safeRows = Array.isArray(rows) ? rows : [];
+      if (postsCountEl) postsCountEl.textContent = String(safeRows.length);
+
+      if (safeRows.length === 0) {
         container.innerHTML = '<div class="admin-item"><p>No posts found.</p></div>';
         return;
       }
 
-      container.innerHTML = rows
+      container.innerHTML = safeRows
         .map((row) => `<article class="admin-item">
-          <h4>${escapeHtml(row.fullName)} (${escapeHtml(row.role)})</h4>
+          <h4 class="admin-item-title">${escapeHtml(row.fullName)} (${escapeHtml(normalizeRoleLabel(row.role))})</h4>
           <p>${escapeHtml(String(row.textContent || "").slice(0, 140) || "[No text]")}</p>
-          <p>Comments: ${Number(row.commentsCount) || 0}</p>
+          <div class="admin-meta-row">
+            <span class="admin-chip">Comments: ${Number(row.commentsCount) || 0}</span>
+          </div>
           <div class="admin-actions">
             <button class="action-btn secondary js-delete-post" data-id="${row.id}" type="button">Delete Post</button>
           </div>
@@ -217,23 +598,31 @@
 
     async function loadComments() {
       const container = document.getElementById("commentsList");
+      const commentsCountEl = document.getElementById("commentsCount");
+
       const response = await fetch("/api/admin/comments");
       if (!response.ok) {
         container.innerHTML = '<div class="admin-item"><p>Unable to load comments.</p></div>';
+        if (commentsCountEl) commentsCountEl.textContent = "0";
         return;
       }
 
       const rows = await response.json();
-      if (!Array.isArray(rows) || rows.length === 0) {
+      const safeRows = Array.isArray(rows) ? rows : [];
+      if (commentsCountEl) commentsCountEl.textContent = String(safeRows.length);
+
+      if (safeRows.length === 0) {
         container.innerHTML = '<div class="admin-item"><p>No comments found.</p></div>';
         return;
       }
 
-      container.innerHTML = rows
+      container.innerHTML = safeRows
         .map((row) => `<article class="admin-item">
-          <h4>${escapeHtml(row.fullName)}</h4>
+          <h4 class="admin-item-title">${escapeHtml(row.fullName)}</h4>
           <p>${escapeHtml(String(row.textContent || "").slice(0, 160))}</p>
-          <p>Post ID: ${row.postId}</p>
+          <div class="admin-meta-row">
+            <span class="admin-chip">Post ID: ${Number(row.postId) || 0}</span>
+          </div>
           <div class="admin-actions">
             <button class="action-btn secondary js-delete-comment" data-id="${row.id}" type="button">Delete Comment</button>
           </div>
@@ -252,6 +641,13 @@
       });
     }
 
+    async function refreshAll() {
+      await loadUsers();
+      await loadRoleRequests();
+      await loadPosts();
+      await loadComments();
+    }
+
     async function init() {
       const me = await ensureAdmin();
       if (!me) {
@@ -263,13 +659,21 @@
         window.location.href = "admin-login.html";
       });
 
+      document.getElementById("refreshAllBtn").addEventListener("click", refreshAll);
+      document.getElementById("refreshUsers").addEventListener("click", loadUsers);
+      document.getElementById("applyUsersFilter").addEventListener("click", loadUsers);
+      document.getElementById("usersSearchInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          loadUsers();
+        }
+      });
+      document.getElementById("usersRoleFilter").addEventListener("change", loadUsers);
       document.getElementById("refreshRoleRequests").addEventListener("click", loadRoleRequests);
       document.getElementById("refreshPosts").addEventListener("click", loadPosts);
       document.getElementById("refreshComments").addEventListener("click", loadComments);
 
-      await loadRoleRequests();
-      await loadPosts();
-      await loadComments();
+      await refreshAll();
     }
 
     init();
