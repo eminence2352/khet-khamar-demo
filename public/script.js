@@ -303,7 +303,7 @@ function renderPosts(posts, container) {
       } else {
         const postPhotoSection = post.imagePath
           ? `<div class="post-photo post-photo-has-image" role="img" aria-label="Uploaded post image"><img class="post-photo-img" src="${escapeHtml(post.imagePath)}" alt="Post image" /></div>`
-          : `<div class="post-photo" role="img" aria-label="Crop photo placeholder"><span>${dictionary.en.photoPlaceholder}</span></div>`;
+          : "";
 
         postBody = `
           <p class="post-text">${textContent}</p>
