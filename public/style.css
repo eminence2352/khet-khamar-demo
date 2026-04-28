@@ -387,6 +387,61 @@ body {
   color: #c75d02;
 }
 
+.post-comment-panel {
+  margin-top: 0.65rem;
+  border: 1px solid var(--primary-light);
+  background: #f7fbf3;
+  border-radius: 0.7rem;
+  padding: 0.58rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.post-comment-label {
+  font-size: 0.78rem;
+  color: rgba(51, 51, 51, 0.72);
+}
+
+.post-comment-input {
+  width: 100%;
+  border: 1px solid #b9d3a7;
+  border-radius: 0.58rem;
+  background: #ffffff;
+  color: var(--text-dark);
+  padding: 0.52rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  min-height: 64px;
+}
+
+.post-comment-input:focus {
+  outline: none;
+  border-color: #6e9d5a;
+  box-shadow: 0 0 0 3px rgba(110, 157, 90, 0.18);
+}
+
+.post-comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.post-comment-actions button {
+  border: 1px solid var(--primary-light);
+  background: #ffffff;
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-dark);
+}
+
+.post-comment-actions .js-submit-comment {
+  border-color: #6e9d5a;
+  background: #ebf6e4;
+  color: #305a22;
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;

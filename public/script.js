@@ -331,6 +331,14 @@ function renderPosts(posts, container) {
           <button type="button"><i class="fa-solid fa-share-nodes"></i> <span>${dictionary.en.share}</span></button>
           ${canAdminModerate ? `<button type="button" class="js-admin-delete-post" data-post-id="${safePostId}"><i class="fa-solid fa-trash"></i> <span>Delete</span></button>` : ""}
         </footer>
+        <section class="post-comment-panel" data-post-id="${safePostId}" hidden>
+          <label class="post-comment-label" for="comment-input-${safePostId}">Write your comment</label>
+          <textarea id="comment-input-${safePostId}" class="post-comment-input" data-post-id="${safePostId}" rows="2" placeholder="Write your comment..."></textarea>
+          <div class="post-comment-actions">
+            <button type="button" class="js-submit-comment" data-post-id="${safePostId}">Send</button>
+            <button type="button" class="js-cancel-comment" data-post-id="${safePostId}">Cancel</button>
+          </div>
+        </section>
       </article>`;
     })
     .join("");
@@ -659,14 +667,64 @@ function initFeedPage() {
         return;
       }
 
-      const commentText = window.prompt("Write your comment:");
-      if (commentText === null) {
+      const postCard = feedList.querySelector(`#post-${postId}`);
+      const commentPanel = postCard ? postCard.querySelector(`.post-comment-panel[data-post-id="${postId}"]`) : null;
+      const commentInput = commentPanel ? commentPanel.querySelector(`.post-comment-input[data-post-id="${postId}"]`) : null;
+      if (!commentPanel || !commentInput) {
         return;
       }
 
-      const trimmedComment = String(commentText).trim();
+      commentPanel.hidden = false;
+      postCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      commentInput.focus();
+      const inputLength = commentInput.value.length;
+      commentInput.setSelectionRange(inputLength, inputLength);
+      return;
+    }
+
+    const cancelCommentButton = event.target.closest(".js-cancel-comment");
+    if (cancelCommentButton) {
+      const postId = Number.parseInt(cancelCommentButton.dataset.postId, 10);
+      if (!Number.isInteger(postId) || postId <= 0) {
+        return;
+      }
+
+      const postCard = feedList.querySelector(`#post-${postId}`);
+      const commentPanel = postCard ? postCard.querySelector(`.post-comment-panel[data-post-id="${postId}"]`) : null;
+      const commentInput = commentPanel ? commentPanel.querySelector(`.post-comment-input[data-post-id="${postId}"]`) : null;
+      if (!commentPanel || !commentInput) {
+        return;
+      }
+
+      commentInput.value = "";
+      commentPanel.hidden = true;
+      return;
+    }
+
+    const submitCommentButton = event.target.closest(".js-submit-comment");
+    if (submitCommentButton) {
+      const state = await getAuthState();
+      if (!state.authenticated) {
+        window.location.href = "/login.html";
+        return;
+      }
+
+      const postId = Number.parseInt(submitCommentButton.dataset.postId, 10);
+      if (!Number.isInteger(postId) || postId <= 0) {
+        return;
+      }
+
+      const postCard = feedList.querySelector(`#post-${postId}`);
+      const commentPanel = postCard ? postCard.querySelector(`.post-comment-panel[data-post-id="${postId}"]`) : null;
+      const commentInput = commentPanel ? commentPanel.querySelector(`.post-comment-input[data-post-id="${postId}"]`) : null;
+      if (!commentPanel || !commentInput) {
+        return;
+      }
+
+      const trimmedComment = String(commentInput.value || "").trim();
       if (!trimmedComment) {
         showNotice("Comment cannot be empty.", "error");
+        commentInput.focus();
         return;
       }
 
@@ -682,6 +740,8 @@ function initFeedPage() {
           return;
         }
 
+        commentInput.value = "";
+        commentPanel.hidden = true;
         await fetchPosts({ container: feedList, targetPostId: postId });
       } catch (error) {
         console.error(error);
