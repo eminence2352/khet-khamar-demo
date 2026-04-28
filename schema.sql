@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS connections;
 DROP TABLE IF EXISTS connection_requests;
 DROP TABLE IF EXISTS post_likes;
+DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS marketplace_ads;
 DROP TABLE IF EXISTS posts;
@@ -81,6 +82,25 @@ CREATE TABLE post_likes (
     UNIQUE KEY uq_post_likes_post_user (post_id, user_id),
     KEY idx_post_likes_user_created (user_id, created_at),
     KEY idx_post_likes_post_created (post_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id INT NOT NULL,
+    actor_id INT NOT NULL,
+    notification_type ENUM('like', 'comment') NOT NULL,
+    post_id INT NOT NULL,
+    comment_id INT DEFAULT NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notifications_recipient_id FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_actor_id FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_post_id FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_comment_id FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE SET NULL,
+    KEY idx_notifications_recipient_read_created (recipient_id, is_read, created_at),
+    KEY idx_notifications_recipient_created (recipient_id, created_at),
+    KEY idx_notifications_post_created (post_id, created_at),
+    KEY idx_notifications_actor_created (actor_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE marketplace_ads (

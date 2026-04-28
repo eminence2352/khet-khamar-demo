@@ -18,6 +18,7 @@ const registerFeedRoutes = require('./src/routes/feedRoutes');
 const registerProfileRoutes = require('./src/routes/profileRoutes');
 const registerSettingsRoutes = require('./src/routes/settingsRoutes');
 const registerAdminRoutes = require('./src/routes/adminRoutes');
+const registerNotificationRoutes = require('./src/routes/notificationRoutes');
 const registerMarketplaceRoutes = require('./src/routes/marketplaceRoutes');
 const registerWeatherRoutes = require('./src/routes/weatherRoutes');
 const registerNewsRoutes = require('./src/routes/newsRoutes');
@@ -38,6 +39,7 @@ const { getConnectionRelation } = createConnectionHelpers(db);
 registerAuthRoutes(app, { db });
 // Feed routes: /api/posts, /api/posts/:postId/like, /api/posts/:postId/comments
 registerFeedRoutes(app, { db, upload, requireAuth });
+registerNotificationRoutes(app, { db, requireAuth });
 registerProfileRoutes(app, {
   db,
   requireAuth,
