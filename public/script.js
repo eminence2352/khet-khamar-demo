@@ -732,67 +732,9 @@ function initFeedPage() {
   }
 
   if (!feedList) {
-  function renderMarketplaceAds(ads, marketplaceGrid) {
-    if (!marketplaceGrid) {
-      return;
-    }
-
-    if (!Array.isArray(ads) || ads.length === 0) {
-      marketplaceGrid.innerHTML = '<article class="market-card"><div class="market-body"><p class="market-seller">No marketplace ads yet.</p></div></article>';
-      return;
-    }
-
-    marketplaceGrid.innerHTML = ads
-      .map((ad) => {
-        const productTitle = escapeHtml(ad.productTitle || "Untitled Product");
-        const description = escapeHtml((ad.description || "").substring(0, 100));
-        const sellerName = escapeHtml(ad.sellerName || "Unknown Seller");
-        const sellerMobile = escapeHtml(ad.sellerMobile || "N/A");
-        const sellerInitials = escapeHtml(getAvatarInitials(ad.sellerName || "?"));
-        const category = escapeHtml(ad.category || "Other");
-        const location = escapeHtml(ad.location || "Unknown");
-        const quantity = ad.quantity ? `${ad.quantity} ${ad.unit || "units"}` : "N/A";
-        const verifiedBadge = ad.isVerifiedSeller
-          ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>'
-          : "";
-        const imageUrl = ad.imagePath ? escapeHtml(ad.imagePath) : null;
-        const imageIconClass = getMarketplaceIconClass(ad);
-        const sellerProfileUrl = profileUrlForUser(ad.sellerId);
-        const imageSection = imageUrl
-          ? `<img class="market-image-img" src="${imageUrl}" alt="${productTitle}" />`
-          : `<div class="market-image"><i class="fa-solid ${imageIconClass}"></i></div>`;
-
-        return `
-        <article class="market-card">
-          <div class="market-image-wrapper">
-            ${imageSection}
-          </div>
-          <div class="market-body">
-            <div class="market-header">
-              <h2 class="market-title">${productTitle}</h2>
-              <span class="market-category">${category}</span>
-            </div>
-            <p class="market-description">${description}${(ad.description || "").length > 100 ? "..." : ""}</p>
-            <div class="market-details">
-              <span class="market-location"><i class="fa-solid fa-location-dot"></i> ${location}</span>
-              <span class="market-quantity"><i class="fa-solid fa-box"></i> ${quantity}</span>
-            </div>
-            <p class="market-price"><strong>${formatPrice(ad)}</strong></p>
-            <div class="market-seller-info">
-              <div class="market-seller-avatar">${sellerInitials}</div>
-              <div>
-                <p class="market-seller">
-                  <a class="post-profile-link" href="${sellerProfileUrl}">${sellerName}</a>
-                  ${verifiedBadge}
-                </p>
-                <button class="call-seller-btn" type="button"><i class="fa-solid fa-phone"></i> ${sellerMobile}</button>
-              </div>
-            </div>
-          </div>
-        </article>`;
-      })
-      .join("");
+    return;
   }
+
   function setComposerImageFile(file) {
     if (!file) {
       clearImagePreview();
@@ -1140,6 +1082,8 @@ function initFeedPage() {
     }
     postTextInput.focus();
   }
+
+  fetchPosts({ container: feedList, targetPostId: Number.isInteger(targetPostIdParam) ? targetPostIdParam : null });
 }
 
 // ============================================
@@ -1843,6 +1787,4 @@ initProfilePage();
 initSettingsHomePage();
 initChangePasswordPage();
 initRoleRequestPage();
-
-}
 

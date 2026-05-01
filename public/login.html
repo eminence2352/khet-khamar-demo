@@ -159,6 +159,60 @@
       display: block;
     }
 
+    .demo-login-box {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px dashed #9bb7c0;
+      background: #f2fbff;
+    }
+
+    .demo-login-box p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #34515a;
+      font-weight: 600;
+    }
+
+    .demo-login-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .demo-login-btn {
+      border: 1px solid #2193b0;
+      background: white;
+      color: #2193b0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .demo-login-btn:hover {
+      background: #2193b0;
+      color: white;
+    }
+
+    .demo-login-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      color: #4f6570;
+      line-height: 1.5;
+    }
+
+    .demo-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #6b7d86;
+      line-height: 1.4;
+    }
+
     @media (max-width: 480px) {
       .auth-container {
         padding: 24px;
@@ -204,6 +258,23 @@
       <button type="submit" class="auth-button">Login</button>
     </form>
 
+    <div class="demo-login-box">
+      <p>Demo Login Options</p>
+      <div class="demo-login-actions">
+        <button type="button" class="demo-login-btn" data-mobile="01700000001" data-password="password123">Farmer</button>
+        <button type="button" class="demo-login-btn" data-mobile="01700000002" data-password="expert123">Expert</button>
+        <button type="button" class="demo-login-btn" data-mobile="01700000003" data-password="seller123">Seller</button>
+        <button type="button" class="demo-login-btn" data-mobile="01700000004" data-password="admin123">Admin</button>
+      </div>
+      <ul class="demo-login-list">
+        <li>01700000001 / password123</li>
+        <li>01700000002 / expert123</li>
+        <li>01700000003 / seller123</li>
+        <li>01700000004 / admin123</li>
+      </ul>
+      <div class="demo-note">Sample feed posts are already seeded in the database. Log in with a demo account to view them.</div>
+    </div>
+
     <div class="auth-link">
       <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
       <p><a href="admin-login.html">Login as Admin</a></p>
@@ -216,6 +287,15 @@
     const successMessage = document.getElementById('successMessage');
     const mobileInput = document.getElementById('mobileNumber');
     const passwordInput = document.getElementById('password');
+    const demoButtons = document.querySelectorAll('.demo-login-btn');
+
+    demoButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        mobileInput.value = button.dataset.mobile || '';
+        passwordInput.value = button.dataset.password || '';
+        form.requestSubmit();
+      });
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
