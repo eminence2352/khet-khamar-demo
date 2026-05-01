@@ -48,7 +48,7 @@ registerProfileRoutes(app, {
 });
 registerSettingsRoutes(app, { db, requireAuth, desiredRoleToDbRole });
 registerAdminRoutes(app, { db, requireAdmin, desiredAdminRoleToDbRole });
-registerMarketplaceRoutes(app, { db });
+registerMarketplaceRoutes(app, { db, upload, requireAuth });
 registerWeatherRoutes(app);
 registerNewsRoutes(app, { db, requireAuth });
 registerNotificationRoutes(app, { db, requireAuth });

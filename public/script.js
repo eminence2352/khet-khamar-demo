@@ -23,6 +23,22 @@ const dictionary = {
     signup: "Sign Up",
     logout: "Logout",
     askingForHelp: "This is a help request",
+    postNewAd: "Post Your Product",
+    productTitle: "Product Title",
+    productTitlePlaceholder: "e.g., Organic Rice Seeds",
+    description: "Description",
+    descriptionPlaceholder: "Describe your product in detail...",
+    price: "Price",
+    quantity: "Quantity",
+    unit: "Unit",
+    unitPlaceholder: "e.g., kg, pieces",
+    category: "Category",
+    location: "Location",
+    productImage: "Product Image",
+    imageUploadHint: "Click to select image",
+    postAdBtn: "Post Product",
+    cancelBtn: "Clear",
+    marketSearchPlaceholder: "Search products",
   },
 };
 
@@ -716,53 +732,67 @@ function initFeedPage() {
   }
 
   if (!feedList) {
-    return;
-  }
-
-  function updateComposerAvatar(profile) {
-    if (!composerAvatar) {
+  function renderMarketplaceAds(ads, marketplaceGrid) {
+    if (!marketplaceGrid) {
       return;
     }
 
-    const profileName = profile && profile.full_name ? profile.full_name : "Anonymous User";
-    composerAvatar.textContent = getAvatarInitials(profileName);
-  }
-
-  getCurrentUserProfile().then((me) => {
-    if (me && me.role === "Admin") {
-      window.location.href = "/admin.html";
+    if (!Array.isArray(ads) || ads.length === 0) {
+      marketplaceGrid.innerHTML = '<article class="market-card"><div class="market-body"><p class="market-seller">No marketplace ads yet.</p></div></article>';
       return;
     }
 
-    updateComposerAvatar(me);
+    marketplaceGrid.innerHTML = ads
+      .map((ad) => {
+        const productTitle = escapeHtml(ad.productTitle || "Untitled Product");
+        const description = escapeHtml((ad.description || "").substring(0, 100));
+        const sellerName = escapeHtml(ad.sellerName || "Unknown Seller");
+        const sellerMobile = escapeHtml(ad.sellerMobile || "N/A");
+        const sellerInitials = escapeHtml(getAvatarInitials(ad.sellerName || "?"));
+        const category = escapeHtml(ad.category || "Other");
+        const location = escapeHtml(ad.location || "Unknown");
+        const quantity = ad.quantity ? `${ad.quantity} ${ad.unit || "units"}` : "N/A";
+        const verifiedBadge = ad.isVerifiedSeller
+          ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>'
+          : "";
+        const imageUrl = ad.imagePath ? escapeHtml(ad.imagePath) : null;
+        const imageIconClass = getMarketplaceIconClass(ad);
+        const sellerProfileUrl = profileUrlForUser(ad.sellerId);
+        const imageSection = imageUrl
+          ? `<img class="market-image-img" src="${imageUrl}" alt="${productTitle}" />`
+          : `<div class="market-image"><i class="fa-solid ${imageIconClass}"></i></div>`;
 
-    fetchPosts({
-      container: feedList,
-      targetPostId: Number.isInteger(targetPostIdParam) && targetPostIdParam > 0 ? targetPostIdParam : null,
-    });
-  });
-
-  function clearImagePreview({ clearInput = false } = {}) {
-    if (currentPreviewUrl) {
-      URL.revokeObjectURL(currentPreviewUrl);
-      currentPreviewUrl = null;
-    }
-
-    if (postImagePreview) {
-      postImagePreview.src = "";
-    }
-
-    if (postImagePreviewWrap) {
-      postImagePreviewWrap.hidden = true;
-    }
-
-    if (clearInput && postPhotoInput) {
-      postPhotoInput.value = "";
-    }
-
-    composerSelectedImageFile = null;
+        return `
+        <article class="market-card">
+          <div class="market-image-wrapper">
+            ${imageSection}
+          </div>
+          <div class="market-body">
+            <div class="market-header">
+              <h2 class="market-title">${productTitle}</h2>
+              <span class="market-category">${category}</span>
+            </div>
+            <p class="market-description">${description}${(ad.description || "").length > 100 ? "..." : ""}</p>
+            <div class="market-details">
+              <span class="market-location"><i class="fa-solid fa-location-dot"></i> ${location}</span>
+              <span class="market-quantity"><i class="fa-solid fa-box"></i> ${quantity}</span>
+            </div>
+            <p class="market-price"><strong>${formatPrice(ad)}</strong></p>
+            <div class="market-seller-info">
+              <div class="market-seller-avatar">${sellerInitials}</div>
+              <div>
+                <p class="market-seller">
+                  <a class="post-profile-link" href="${sellerProfileUrl}">${sellerName}</a>
+                  ${verifiedBadge}
+                </p>
+                <button class="call-seller-btn" type="button"><i class="fa-solid fa-phone"></i> ${sellerMobile}</button>
+              </div>
+            </div>
+          </div>
+        </article>`;
+      })
+      .join("");
   }
-
   function setComposerImageFile(file) {
     if (!file) {
       clearImagePreview();
@@ -1178,69 +1208,173 @@ function initMarketplacePage() {
   }
 
   fetchMarketplaceAds();
-}
+  function initMarketplacePage() {
+    const marketplaceGrid = document.querySelector(".market-grid");
+    if (!marketplaceGrid) {
+      return;
+    }
 
-function renderProfileSummary(profile) {
-  const profileCard = document.getElementById("profileCard");
-  if (!profileCard) {
-    return;
-  }
+    let allMarketplaceAds = [];
+    const searchInput = document.querySelector(".market-filter-item.search-field input");
+    const categorySelect = document.getElementById("categorySelect");
+    const locationSelect = document.getElementById("locationSelect");
+    const sellerPostingCard = document.getElementById("sellerPostingCard");
+    const marketplaceForm = document.getElementById("marketplaceForm");
+    const adImage = document.getElementById("adImage");
+    const adImagePreview = document.getElementById("adImagePreview");
+    const removeAdImageBtn = document.getElementById("removeAdImage");
+    let selectedAdImageFile = null;
 
-  const initials = escapeHtml(getAvatarInitials(profile.fullName));
-  const roleBadge = profile.role === "Verified Expert"
-    ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Expert</span>'
-    : profile.role === "General Vendor"
-      ? '<span class="seller-badge"><i class="fa-solid fa-store"></i> Seller</span>'
-      : "";
-  const roleLabel = escapeHtml(formatRoleLabel(profile.role));
+    // Check if user is a seller and show posting form
+    async function checkSellerStatus() {
+      try {
+        const state = await getAuthState();
+        if (!state.authenticated) {
+          if (sellerPostingCard) sellerPostingCard.style.display = "none";
+          return;
+        }
 
-  profileCard.innerHTML = `
-    <div class="profile-card-top">
-      <div class="avatar avatar-owner">${initials}</div>
-      <div>
-        <h2 class="profile-name">${escapeHtml(profile.fullName)}</h2>
-        <p class="profile-role">${roleLabel} • ${escapeHtml(profile.districtLocation || "Unknown location")} ${roleBadge}</p>
-      </div>
-    </div>
-    <p class="profile-bio">${escapeHtml(profile.bio || "No bio yet.")}</p>
-    <div class="profile-stats">
-      <div class="profile-stat"><strong>${profile.postsCount}</strong><span>Posts</span></div>
-      <div class="profile-stat"><strong>${profile.connectionsCount}</strong><span>Connections</span></div>
-      <div class="profile-stat"><strong>${profile.followersCount}</strong><span>Followers</span></div>
-      <div class="profile-stat"><strong>${profile.followingCount}</strong><span>Following</span></div>
-    </div>
-  `;
-}
+        const response = await fetch("/api/auth/me");
+        if (!response.ok) {
+          if (sellerPostingCard) sellerPostingCard.style.display = "none";
+          return;
+        }
 
-function renderProfileActions(profile, refreshProfile) {
-  const profileActions = document.getElementById("profileActions");
-  if (!profileActions) {
-    return;
-  }
+        const profile = await response.json();
+        const isSeller = profile.role === "General Vendor" || profile.role === "Verified Vendor";
+        if (sellerPostingCard) {
+          sellerPostingCard.style.display = isSeller ? "block" : "none";
+        }
+      } catch (error) {
+        console.error("Error checking seller status:", error);
+        if (sellerPostingCard) sellerPostingCard.style.display = "none";
+      }
+    }
 
-  profileActions.innerHTML = "";
+    // Handle image preview for marketplace ad
+    if (adImage) {
+      adImage.addEventListener("change", (e) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        if (file) {
+          selectedAdImageFile = file;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (adImagePreview && adImagePreviewImg) {
+              adImagePreviewImg.src = event.target.result;
+              adImagePreview.style.display = "block";
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
-  if (profile.isOwnProfile) {
-    profileActions.innerHTML = '<a class="action-btn" href="settings.html">Settings</a>';
-    return;
-  }
+    // Handle remove image button
+    if (removeAdImageBtn) {
+      removeAdImageBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        selectedAdImageFile = null;
+        if (adImage) adImage.value = "";
+        if (adImagePreview) adImagePreview.style.display = "none";
+      });
+    }
 
-  if (!authState.authenticated) {
-    profileActions.innerHTML = '<a class="action-btn" href="login.html">Login to connect</a>';
-    return;
-  }
+    // Handle marketplace form submission
+    if (marketplaceForm) {
+      marketplaceForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-  const relation = profile.relation || {};
+        const formData = new FormData();
+        formData.append("productTitle", document.getElementById("adTitle").value);
+        formData.append("description", document.getElementById("adDescription").value);
+        formData.append("price", document.getElementById("adPrice").value);
+        formData.append("category", document.getElementById("adCategory").value);
+        formData.append("location", document.getElementById("adLocation").value);
+        formData.append("quantity", document.getElementById("adQuantity").value || "");
+        formData.append("unit", document.getElementById("adUnit").value);
 
-  if (relation.canConnect) {
-    if (relation.connectionStatus === "none") {
-      const connectBtn = document.createElement("button");
-      connectBtn.className = "action-btn";
-      connectBtn.textContent = "Connect";
-      connectBtn.addEventListener("click", async () => {
-        const response = await fetch("/api/connections/request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        if (selectedAdImageFile) {
+          formData.append("image", selectedAdImageFile);
+        }
+
+        try {
+          const response = await fetch("/api/marketplace", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            showNotice(data.message || "Failed to post product", "error");
+            return;
+          }
+
+          showNotice("Product posted successfully!", "success");
+          marketplaceForm.reset();
+          selectedAdImageFile = null;
+          if (adImagePreview) adImagePreview.style.display = "none";
+          await fetchMarketplaceAds();
+        } catch (error) {
+          console.error("Error posting product:", error);
+          showNotice("Failed to post product", "error");
+        }
+      });
+    }
+
+    function filterMarketplaceAds() {
+      if (!Array.isArray(allMarketplaceAds)) {
+        return;
+      }
+
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+      const selectedCategory = categorySelect ? categorySelect.value : "";
+      const selectedLocation = locationSelect ? locationSelect.value : "";
+
+      const filtered = allMarketplaceAds.filter((ad) => {
+        const matchesSearch =
+          !searchTerm ||
+          String(ad.productTitle || "").toLowerCase().includes(searchTerm) ||
+          String(ad.description || "").toLowerCase().includes(searchTerm);
+
+        const matchesCategory = !selectedCategory || ad.category === selectedCategory;
+        const matchesLocation = !selectedLocation || ad.location === selectedLocation;
+
+        return matchesSearch && matchesCategory && matchesLocation;
+      });
+
+      renderMarketplaceAds(filtered, marketplaceGrid);
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", filterMarketplaceAds);
+    }
+
+    if (categorySelect) {
+      categorySelect.addEventListener("change", filterMarketplaceAds);
+    }
+
+    if (locationSelect) {
+      locationSelect.addEventListener("change", filterMarketplaceAds);
+    }
+
+    async function fetchMarketplaceAds() {
+      try {
+        const response = await fetch("/api/marketplace");
+        if (!response.ok) {
+          throw new Error("Failed to fetch marketplace ads");
+        }
+
+        allMarketplaceAds = await response.json();
+        filterMarketplaceAds();
+      } catch (error) {
+        console.error(error);
+        marketplaceGrid.innerHTML = '<article class="market-card"><div class="market-body"><p class="market-seller">Unable to load marketplace ads.</p></div></article>';
+      }
+    }
+
+    // Initialize
+    checkSellerStatus();
+    fetchMarketplaceAds();
           body: JSON.stringify({ receiverId: profile.id }),
         });
 
