@@ -699,6 +699,27 @@ function initFeedPage() {
   let currentPreviewUrl = null;
   let composerSelectedImageFile = null;
 
+  function clearImagePreview({ clearInput = false } = {}) {
+    composerSelectedImageFile = null;
+
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
+      currentPreviewUrl = null;
+    }
+
+    if (postImagePreview) {
+      postImagePreview.src = "";
+    }
+
+    if (postImagePreviewWrap) {
+      postImagePreviewWrap.hidden = true;
+    }
+
+    if (clearInput && postPhotoInput) {
+      postPhotoInput.value = "";
+    }
+  }
+
   async function loadPostComments(postId, { forceRefresh = false } = {}) {
     const postCard = feedList.querySelector(`#post-${postId}`);
     const commentPanel = postCard ? postCard.querySelector(`.post-comment-panel[data-post-id="${postId}"]`) : null;
