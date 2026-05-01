@@ -16,11 +16,13 @@ const dictionary = {
     marketplace: "Market",
     weather: "Weather",
     profile: "Profile",
+    news: "News",
     guestModeMsg: "You're browsing as a guest.",
     loginToReact: "Login to post and react",
     login: "Login",
     signup: "Sign Up",
     logout: "Logout",
+    askingForHelp: "This is a help request",
   },
 };
 
@@ -504,6 +506,165 @@ function renderMarketplaceAds(ads, marketplaceGrid) {
 }
 
 // ============================================
+// NOTIFICATION CENTER
+// ============================================
+let notificationRefreshInterval = null;
+
+async function fetchNotifications() {
+  try {
+    const response = await fetch("/api/notifications?limit=50");
+    if (!response.ok) {
+      throw new Error("Failed to fetch notifications");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return { notifications: [], unreadCount: 0 };
+  }
+}
+
+function updateNotificationBadge(unreadCount) {
+  const badge = document.getElementById("notificationBadge");
+  if (!badge) return;
+
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+    badge.style.display = "block";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+function formatTimeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
+function renderNotifications(notifications) {
+  const notificationList = document.getElementById("notificationList");
+  if (!notificationList) return;
+
+  if (!notifications || notifications.length === 0) {
+    notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
+    return;
+  }
+
+  notificationList.innerHTML = notifications
+    .map((notif) => {
+      const actorName = escapeHtml(notif.actorName || "Someone");
+      const timeAgo = formatTimeAgo(notif.createdAt);
+      let message = "";
+      let icon = "";
+
+      if (notif.notificationType === "like") {
+        message = `${actorName} liked your post`;
+        icon = "fa-heart";
+      } else if (notif.notificationType === "comment") {
+        message = `${actorName} commented on your post`;
+        icon = "fa-comment";
+      } else if (notif.notificationType === "help_request") {
+        message = `${actorName} posted a help request`;
+        icon = "fa-circle-exclamation";
+      }
+
+      const readClass = notif.isRead ? "notification-item-read" : "notification-item-unread";
+
+      return `
+        <div class="notification-item ${readClass}" data-notification-id="${notif.id}">
+          <div class="notification-avatar">${escapeHtml(getAvatarInitials(notif.actorName || "?"))}</div>
+          <div class="notification-content">
+            <div class="notification-message">
+              <i class="fa-solid ${icon}"></i>
+              <span>${message}</span>
+            </div>
+            <div class="notification-preview">${escapeHtml((notif.postContent || "").substring(0, 50))}${(notif.postContent || "").length > 50 ? "..." : ""}</div>
+            <div class="notification-time">${timeAgo}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Add click handlers to notifications
+  const notificationItems = notificationList.querySelectorAll(".notification-item");
+  notificationItems.forEach((item) => {
+    item.addEventListener("click", async () => {
+      const notifId = item.dataset.notificationId;
+      if (item.classList.contains("notification-item-unread")) {
+        try {
+          await fetch(`/api/notifications/${notifId}/read`, { method: "POST" });
+          item.classList.remove("notification-item-unread");
+          item.classList.add("notification-item-read");
+          await loadNotifications();
+        } catch (error) {
+          console.error("Error marking notification as read:", error);
+        }
+      }
+    });
+  });
+}
+
+async function loadNotifications() {
+  const data = await fetchNotifications();
+  updateNotificationBadge(data.unreadCount);
+  renderNotifications(data.notifications);
+}
+
+function initNotificationCenter() {
+  const notificationToggle = document.getElementById("notificationToggle");
+  const notificationPanel = document.getElementById("notificationPanel");
+  const readAllBtn = document.getElementById("readAllBtn");
+
+  if (!notificationToggle || !notificationPanel) return;
+
+  // Toggle notification panel visibility
+  notificationToggle.addEventListener("click", async () => {
+    if (notificationPanel.style.display === "none") {
+      notificationPanel.style.display = "block";
+      await loadNotifications();
+    } else {
+      notificationPanel.style.display = "none";
+    }
+  });
+
+  // Mark all as read button
+  if (readAllBtn) {
+    readAllBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/notifications/read-all", { method: "POST" });
+        await loadNotifications();
+      } catch (error) {
+        console.error("Error marking all as read:", error);
+      }
+    });
+  }
+
+  // Close panel when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#notificationCenter")) {
+      notificationPanel.style.display = "none";
+    }
+  });
+
+  // Load notifications immediately and refresh every 30 seconds
+  loadNotifications();
+  if (notificationRefreshInterval) {
+    clearInterval(notificationRefreshInterval);
+  }
+  notificationRefreshInterval = setInterval(loadNotifications, 30000);
+}
+
+// ============================================
 // FEED PAGE
 // ============================================
 function initFeedPage() {
@@ -671,6 +832,8 @@ function initFeedPage() {
   async function submitComposerPost() {
     const textContent = postTextInput ? postTextInput.value.trim() : "";
     const selectedImageFile = composerSelectedImageFile || (postPhotoInput && postPhotoInput.files ? postPhotoInput.files[0] : null);
+    const isHelpRequestCheckbox = document.getElementById("isHelpRequest");
+    const isHelpRequest = isHelpRequestCheckbox ? isHelpRequestCheckbox.checked : false;
 
     if (!textContent && !selectedImageFile) {
       if (postTextInput) {
@@ -681,6 +844,7 @@ function initFeedPage() {
 
     const formData = new FormData();
     formData.append("textContent", textContent);
+    formData.append("isHelpRequest", isHelpRequest);
     if (selectedImageFile) {
       formData.append("image", selectedImageFile);
     }
@@ -696,6 +860,9 @@ function initFeedPage() {
 
     if (postTextInput) {
       postTextInput.value = "";
+    }
+    if (isHelpRequestCheckbox) {
+      isHelpRequestCheckbox.checked = false;
     }
     clearImagePreview({ clearInput: true });
     await fetchPosts({ container: feedList });
@@ -924,6 +1091,9 @@ function initFeedPage() {
           window.location.href = "/index.html";
         });
       }
+
+      // Initialize notification center for authenticated users
+      initNotificationCenter();
       return;
     }
 

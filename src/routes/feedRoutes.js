@@ -59,11 +59,13 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
   // ENDPOINT 2: POST /api/posts - Create a new post
   // Requires authentication, accepts optional image upload
   app.post('/api/posts', requireAuth, upload.single('image'), async (req, res) => {
-    // Get the text content from the request body
-    const { textContent } = req.body;
+    // Get the text content and help request flag from the request body
+    const { textContent, isHelpRequest } = req.body;
     const trimmedText = String(textContent || '').trim();
     // Store the uploaded image path if one was provided
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+    // Convert isHelpRequest to boolean (default false)
+    const isHelp = Boolean(isHelpRequest === true || isHelpRequest === 'true');
 
     // A post must have either text OR an image (or both)
     if (!trimmedText && !imagePath) {
@@ -71,18 +73,57 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
     }
 
     try {
-      // Insert the new post into the database
-      const [result] = await db.query(
-        'INSERT INTO posts (user_id, text_content, image_path) VALUES (?, ?, ?)',
-        [req.session.userId, trimmedText || '', imagePath]
-      );
+      // Get a dedicated database connection for transaction support
+      const connection = await db.getConnection();
+      try {
+        // Start a transaction to ensure post and notifications are created together
+        await connection.beginTransaction();
 
-      // Return success with the new post ID
-      res.status(201).json({
-        message: 'Post created successfully',
-        postId: result.insertId,
-        imagePath,
-      });
+        // Insert the new post into the database
+        const [result] = await connection.query(
+          'INSERT INTO posts (user_id, text_content, image_path, is_help_request) VALUES (?, ?, ?, ?)',
+          [req.session.userId, trimmedText || '', imagePath, isHelp ? 1 : 0]
+        );
+
+        const postId = result.insertId;
+
+        // If this is a help request, create notifications for all verified experts
+        if (isHelp) {
+          // Get all verified experts
+          const [experts] = await connection.query(
+            "SELECT id FROM users WHERE role = 'Verified Expert' AND is_active = TRUE AND id != ?",
+            [req.session.userId]
+          );
+
+          // Create notifications for each expert
+          if (experts.length > 0) {
+            const notificationPromises = experts.map((expert) =>
+              connection.query(
+                'INSERT INTO notifications (recipient_id, actor_id, notification_type, post_id) VALUES (?, ?, ?, ?)',
+                [expert.id, req.session.userId, 'help_request', postId]
+              )
+            );
+            await Promise.all(notificationPromises);
+          }
+        }
+
+        // Commit all changes atomically
+        await connection.commit();
+
+        // Return success with the new post ID
+        res.status(201).json({
+          message: 'Post created successfully',
+          postId,
+          imagePath,
+        });
+      } catch (error) {
+        // If any error occurs, undo all database changes
+        await connection.rollback();
+        throw error;
+      } finally {
+        // Always release the connection back to the pool
+        connection.release();
+      }
     } catch (error) {
       console.error('Failed to create post:', error.message);
       res.status(500).json({ message: 'Failed to create post' });
@@ -106,9 +147,9 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
       // Start a transaction - this ensures all operations succeed or fail together
       await connection.beginTransaction();
 
-      // Check if the post exists and is active
+      // Check if the post exists and is active, and get the post owner
       const [postRows] = await connection.query(
-        'SELECT id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1',
+        'SELECT id, user_id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1',
         [postId]
       );
 
@@ -116,6 +157,8 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
         await connection.rollback();
         return res.status(404).json({ message: 'Post not found.' });
       }
+
+      const postOwnerId = postRows[0].user_id;
 
       // Check if the current user already likes this post
       const [existingRows] = await connection.query(
@@ -134,6 +177,14 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
       // If not yet liked, add the like (toggle to like)
       await connection.query('INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)', [postId, userId]);
       await connection.query('UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?', [postId]);
+
+      // Create notification for the post owner (only if they're not the one liking)
+      if (postOwnerId !== userId) {
+        await connection.query(
+          'INSERT INTO notifications (recipient_id, actor_id, notification_type, post_id) VALUES (?, ?, ?, ?)',
+          [postOwnerId, userId, 'like', postId]
+        );
+      }
 
       // Commit all changes atomically
       await connection.commit();
@@ -202,25 +253,51 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
       return res.status(400).json({ message: 'Comment text is required.' });
     }
 
+    // Get a dedicated database connection for transaction support
+    const connection = await db.getConnection();
     try {
-      // Verify the post exists and is active
-      const [postRows] = await db.query('SELECT id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1', [postId]);
+      // Start a transaction - this ensures comment and notification are created together
+      await connection.beginTransaction();
+
+      // Verify the post exists and is active, and get the post owner
+      const [postRows] = await connection.query('SELECT id, user_id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1', [postId]);
       if (postRows.length === 0) {
+        await connection.rollback();
         return res.status(404).json({ message: 'Post not found.' });
       }
 
+      const postOwnerId = postRows[0].user_id;
+
       // Insert the comment into the database
-      const [result] = await db.query(
+      const [result] = await connection.query(
         `INSERT INTO comments (post_id, user_id, text_content)
          VALUES (?, ?, ?)`,
         [postId, userId, textContent]
       );
 
+      const commentId = result.insertId;
+
+      // Create notification for the post owner (only if they're not the one commenting)
+      if (postOwnerId !== userId) {
+        await connection.query(
+          'INSERT INTO notifications (recipient_id, actor_id, notification_type, post_id, comment_id) VALUES (?, ?, ?, ?, ?)',
+          [postOwnerId, userId, 'comment', postId, commentId]
+        );
+      }
+
+      // Commit all changes atomically
+      await connection.commit();
+
       // Return success with the new comment ID
-      res.status(201).json({ message: 'Comment added.', commentId: result.insertId });
+      res.status(201).json({ message: 'Comment added.', commentId });
     } catch (error) {
+      // If any error occurs, undo all database changes
+      await connection.rollback();
       console.error('Failed to add comment:', error.message);
       res.status(500).json({ message: 'Failed to add comment' });
+    } finally {
+      // Always release the connection back to the pool
+      connection.release();
     }
   });
 }

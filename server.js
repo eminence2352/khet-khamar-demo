@@ -21,6 +21,7 @@ const registerAdminRoutes = require('./src/routes/adminRoutes');
 const registerMarketplaceRoutes = require('./src/routes/marketplaceRoutes');
 const registerWeatherRoutes = require('./src/routes/weatherRoutes');
 const registerNewsRoutes = require('./src/routes/newsRoutes');
+const registerNotificationRoutes = require('./src/routes/notificationRoutes');
 
 // Create the Express app with session, CORS, and static file support
 const app = createApp();
@@ -50,6 +51,7 @@ registerAdminRoutes(app, { db, requireAdmin, desiredAdminRoleToDbRole });
 registerMarketplaceRoutes(app, { db });
 registerWeatherRoutes(app);
 registerNewsRoutes(app, { db, requireAuth });
+registerNotificationRoutes(app, { db, requireAuth });
 
 // Add error handling middleware at the end (catches multer and request errors)
 app.use(errorHandler);

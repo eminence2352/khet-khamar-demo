@@ -50,12 +50,14 @@ CREATE TABLE posts (
     shared_news_source VARCHAR(150) DEFAULT NULL,
     shared_news_category VARCHAR(80) DEFAULT NULL,
     likes_count INT NOT NULL DEFAULT 0,
+    is_help_request TINYINT(1) NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_posts_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     KEY idx_posts_user_created (user_id, created_at),
-    KEY idx_posts_active_created (is_active, created_at)
+    KEY idx_posts_active_created (is_active, created_at),
+    KEY idx_posts_is_help_request (is_help_request)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE comments (
@@ -81,6 +83,24 @@ CREATE TABLE post_likes (
     UNIQUE KEY uq_post_likes_post_user (post_id, user_id),
     KEY idx_post_likes_user_created (user_id, created_at),
     KEY idx_post_likes_post_created (post_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id INT NOT NULL,
+    actor_id INT NOT NULL,
+    notification_type ENUM('like', 'comment', 'help_request') NOT NULL,
+    post_id INT DEFAULT NULL,
+    comment_id INT DEFAULT NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notifications_recipient_id FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_actor_id FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_post_id FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_comment_id FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    KEY idx_notifications_recipient_created (recipient_id, created_at),
+    KEY idx_notifications_recipient_is_read (recipient_id, is_read),
+    KEY idx_notifications_actor_created (actor_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE marketplace_ads (
