@@ -307,7 +307,7 @@ function renderPosts(posts, container) {
         const newsSource = escapeHtml(post.sharedNewsSource || "Unknown source");
         const newsCategory = escapeHtml(post.sharedNewsCategory || "News");
         const newsUrl = post.sharedNewsUrl ? escapeHtml(post.sharedNewsUrl) : "";
-        const sourceLine = `${newsCategory} • ${newsSource}`;
+        const sourceLine = `${newsCategory} - ${newsSource}`;
 
         postBody = `
           ${textContent ? `<p class="post-text">${textContent}</p>` : ""}
@@ -423,7 +423,7 @@ function renderComments(comments, listContainer) {
         <article class="post-comment-item">
           <div class="post-comment-avatar">${commenterInitials}</div>
           <div class="post-comment-body">
-            <p class="post-comment-meta"><strong>${commenterName}</strong> • ${createdText}</p>
+            <p class="post-comment-meta"><strong>${commenterName}</strong> - ${createdText}</p>
             <p class="post-comment-text">${commentText}</p>
           </div>
         </article>
@@ -470,7 +470,7 @@ function formatPrice(ad) {
     ? priceValue.toFixed(2).replace(/\.00$/, "")
     : String(ad.price || "0");
   const unit = ad.unit ? ` / ${escapeHtml(ad.unit)}` : "";
-  return `৳ ${safePrice}${unit}`;
+  return `Rs ${safePrice}${unit}`;
 }
 
 function renderMarketplaceAds(ads, marketplaceGrid) {
@@ -1148,6 +1148,11 @@ function initFeedPage() {
 function initMarketplacePage() {
   const marketplaceGrid = document.querySelector(".market-grid");
   if (!marketplaceGrid) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initMarketplacePage, { once: true });
+    } else {
+      window.setTimeout(initMarketplacePage, 0);
+    }
     return;
   }
 
@@ -1208,32 +1213,17 @@ function initMarketplacePage() {
   }
 
   fetchMarketplaceAds();
-  function initMarketplacePage() {
-    const marketplaceGrid = document.querySelector(".market-grid");
-    if (!marketplaceGrid) {
-      return;
-    }
-
-    let allMarketplaceAds = [];
-    const searchInput = document.querySelector(".market-filter-item.search-field input");
-    const categorySelect = document.getElementById("categorySelect");
-    const locationSelect = document.getElementById("locationSelect");
-    const sellerPostingCard = document.getElementById("sellerPostingCard");
-    const marketplaceForm = document.getElementById("marketplaceForm");
-    const adImage = document.getElementById("adImage");
-    const adImagePreview = document.getElementById("adImagePreview");
-    const removeAdImageBtn = document.getElementById("removeAdImage");
-    let selectedAdImageFile = null;
+  const sellerPostingCard = document.getElementById("sellerPostingCard");
+  const marketplaceForm = document.getElementById("marketplaceForm");
+  const adImage = document.getElementById("adImage");
+  const adImagePreview = document.getElementById("adImagePreview");
+  const adImagePreviewImg = document.getElementById("adImagePreviewImg");
+  const removeAdImageBtn = document.getElementById("removeAdImage");
+  let selectedAdImageFile = null;
 
     // Check if user is a seller and show posting form
     async function checkSellerStatus() {
       try {
-        const state = await getAuthState();
-        if (!state.authenticated) {
-          if (sellerPostingCard) sellerPostingCard.style.display = "none";
-          return;
-        }
-
         const response = await fetch("/api/auth/me");
         if (!response.ok) {
           if (sellerPostingCard) sellerPostingCard.style.display = "none";
@@ -1375,102 +1365,7 @@ function initMarketplacePage() {
     // Initialize
     checkSellerStatus();
     fetchMarketplaceAds();
-          body: JSON.stringify({ receiverId: profile.id }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          showNotice(data.message || "Failed to send connection request.", "error");
-          return;
-        }
-
-        showNotice("Connection request sent.", "success");
-        await refreshProfile();
-      });
-      profileActions.appendChild(connectBtn);
-    } else if (relation.connectionStatus === "connected") {
-      const connected = document.createElement("span");
-      connected.className = "action-btn secondary";
-      connected.textContent = "Connected";
-      profileActions.appendChild(connected);
-    } else if (relation.connectionStatus === "outgoing_pending") {
-      const sent = document.createElement("span");
-      sent.className = "action-btn secondary";
-      sent.textContent = "Request Sent";
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "action-btn secondary";
-      cancelBtn.textContent = "Cancel Request";
-      cancelBtn.addEventListener("click", async () => {
-        const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/cancel`, {
-          method: "POST",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          showNotice(data.message || "Failed to cancel request.", "error");
-          return;
-        }
-        await refreshProfile();
-      });
-
-      profileActions.appendChild(sent);
-      profileActions.appendChild(cancelBtn);
-    } else if (relation.connectionStatus === "incoming_pending") {
-      const acceptBtn = document.createElement("button");
-      acceptBtn.className = "action-btn";
-      acceptBtn.textContent = "Accept Request";
-      acceptBtn.addEventListener("click", async () => {
-        const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/respond`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "accept" }),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          showNotice(data.message || "Failed to accept request.", "error");
-          return;
-        }
-        await refreshProfile();
-      });
-
-      const discardBtn = document.createElement("button");
-      discardBtn.className = "action-btn secondary";
-      discardBtn.textContent = "Discard";
-      discardBtn.addEventListener("click", async () => {
-        const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/respond`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "discard" }),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          showNotice(data.message || "Failed to discard request.", "error");
-          return;
-        }
-        await refreshProfile();
-      });
-
-      profileActions.appendChild(acceptBtn);
-      profileActions.appendChild(discardBtn);
-    }
   }
-
-  if (relation.canFollow) {
-    const followBtn = document.createElement("button");
-    followBtn.className = relation.isFollowing ? "action-btn secondary" : "action-btn";
-    followBtn.textContent = relation.isFollowing ? "Unfollow Expert" : "Follow Expert";
-    followBtn.addEventListener("click", async () => {
-      const response = await fetch(`/api/follows/${profile.id}`, { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) {
-        showNotice(data.message || "Failed to update follow.", "error");
-        return;
-      }
-      await refreshProfile();
-    });
-    profileActions.appendChild(followBtn);
-  }
-}
 
 function renderRequestList(container, rows, withActions, onAccept, onDiscard) {
   if (!container) {
@@ -1698,7 +1593,7 @@ async function initProfilePage() {
             <div class="request-item-top">
               <div>
                 <p class="request-item-name"><a class="post-profile-link" href="${profileUrl}">${escapeHtml(row.fullName)}</a></p>
-                <p class="request-item-role">${escapeHtml(row.role || "User")} • ${escapeHtml(row.districtLocation || "Unknown location")}</p>
+                <p class="request-item-role">${escapeHtml(row.role || "User")} - ${escapeHtml(row.districtLocation || "Unknown location")}</p>
               </div>
             </div>
           </article>
@@ -1948,4 +1843,6 @@ initProfilePage();
 initSettingsHomePage();
 initChangePasswordPage();
 initRoleRequestPage();
+
+}
 
