@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;700;800&display=swap"
     rel="stylesheet"
   />
   <link
@@ -22,12 +22,38 @@
       <p class="logo-kicker">Farmer Community</p>
       <h1 class="logo-title">Khet-Khamar</h1>
     </div>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a class="nav-item" href="index.html" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+        <span>Home</span>
+      </a>
+      <a class="nav-item" href="marketplace.html" aria-label="Marketplace">
+        <i class="fa-solid fa-store"></i>
+        <span>Market</span>
+      </a>
+      <a class="nav-item nav-post" href="index.html?compose=1" aria-label="Create post">
+        <i class="fa-solid fa-plus"></i>
+      </a>
+      <a class="nav-item" href="news.html" aria-label="News">
+        <i class="fa-solid fa-newspaper"></i>
+        <span>News</span>
+      </a>
+      <a class="nav-item active" href="profile.html" aria-label="Profile">
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
+      </a>
+    </nav>
   </header>
 
   <main id="profilePage" class="main-content profile-main">
     <section id="profileCard" class="profile-card" aria-label="Profile summary"></section>
 
     <section id="profileActions" class="profile-actions" aria-label="Profile actions"></section>
+
+    <!-- Logout for profile owner (moved here from homepage) -->
+    <div id="profileLogoutWrap" style="display:none; margin-top:0.5rem;">
+      <button id="profileLogoutBtn" class="action-btn secondary">Logout</button>
+    </div>
 
     <section class="profile-panel" aria-label="Profile posts">
       <div class="section-header compact">
@@ -59,6 +85,26 @@
       <div id="connectionsList" class="request-list"></div>
     </section>
 
+    <section id="sellerReviewsPanel" class="profile-panel" style="display: none;" aria-label="Seller reviews">
+      <div class="section-header compact">
+        <h2>Seller Reviews</h2>
+      </div>
+      <div id="sellerReviewsList" class="request-list"></div>
+      <div id="sellerReviewForm" class="review-form-wrap" style="display:none;">
+        <label for="sellerReviewRating">Your rating</label>
+        <select id="sellerReviewRating" class="review-rating">
+          <option value="5">5 — Excellent</option>
+          <option value="4">4 — Good</option>
+          <option value="3">3 — Okay</option>
+          <option value="2">2 — Poor</option>
+          <option value="1">1 — Terrible</option>
+        </select>
+        <label for="sellerReviewText">Your review</label>
+        <textarea id="sellerReviewText" rows="3" placeholder="Write about your experience"></textarea>
+        <button id="submitSellerReview" class="submit-review-btn">Submit Review</button>
+      </div>
+    </section>
+
     <section id="adminToolsPanel" class="profile-panel" style="display: none;" aria-label="Admin tools">
       <div class="section-header compact">
         <h2>Admin Role Tools</h2>
@@ -85,28 +131,6 @@
       <div id="commentedPostsList" class="request-list"></div>
     </section>
   </main>
-
-  <nav class="bottom-nav" aria-label="Bottom navigation">
-    <a class="nav-item" href="index.html" aria-label="Home">
-      <i class="fa-solid fa-house"></i>
-      <span>Home</span>
-    </a>
-    <a class="nav-item" href="marketplace.html" aria-label="Marketplace">
-      <i class="fa-solid fa-store"></i>
-      <span>Market</span>
-    </a>
-    <a class="nav-item nav-post" href="index.html?compose=1" aria-label="Create post">
-      <i class="fa-solid fa-plus"></i>
-    </a>
-    <a class="nav-item" href="news.html" aria-label="News">
-      <i class="fa-solid fa-newspaper"></i>
-      <span>News</span>
-    </a>
-    <a class="nav-item active" href="profile.html" aria-label="Profile">
-      <i class="fa-solid fa-user"></i>
-      <span>Profile</span>
-    </a>
-  </nav>
 
   <script src="script.js"></script>
 </body>

@@ -1,4 +1,6 @@
 // This file registers all profile-related API endpoints (profiles, connections, follows)
+const { createNotification } = require('../helpers/notifications');
+
 function registerProfileRoutes(app, {
   db,
   requireAuth,
@@ -136,6 +138,12 @@ function registerProfileRoutes(app, {
          VALUES (?, ?, 'pending')`,
         [senderId, receiverId]
       );
+
+      await createNotification(db, {
+        recipientId: receiverId,
+        actorId: senderId,
+        type: 'connection_request',
+      });
 
       res.status(201).json({ message: 'Connection request sent.', requestId: result.insertId });
     } catch (error) {
@@ -287,6 +295,12 @@ function registerProfileRoutes(app, {
         [userOneId, userTwoId]
       );
 
+      await createNotification(connection, {
+        recipientId: requestRow.sender_id,
+        actorId: Number(req.session.userId),
+        type: 'connection_accepted',
+      });
+
       await connection.commit();
       res.json({ message: 'Connection request accepted.' });
     } catch (error) {
@@ -367,6 +381,11 @@ function registerProfileRoutes(app, {
       }
 
       await db.query('INSERT INTO follows (follower_id, expert_id) VALUES (?, ?)', [followerId, expertId]);
+      await createNotification(db, {
+        recipientId: expertId,
+        actorId: followerId,
+        type: 'new_follower',
+      });
       res.status(201).json({ message: 'Now following expert.', following: true });
     } catch (error) {
       console.error('Failed to update follow:', error.message);

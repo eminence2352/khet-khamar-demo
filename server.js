@@ -19,9 +19,9 @@ const registerProfileRoutes = require('./src/routes/profileRoutes');
 const registerSettingsRoutes = require('./src/routes/settingsRoutes');
 const registerAdminRoutes = require('./src/routes/adminRoutes');
 const registerMarketplaceRoutes = require('./src/routes/marketplaceRoutes');
+const registerNotificationRoutes = require('./src/routes/notificationRoutes');
 const registerWeatherRoutes = require('./src/routes/weatherRoutes');
 const registerNewsRoutes = require('./src/routes/newsRoutes');
-const registerNotificationRoutes = require('./src/routes/notificationRoutes');
 
 // Create the Express app with session, CORS, and static file support
 const app = createApp();
@@ -49,15 +49,15 @@ registerProfileRoutes(app, {
 registerSettingsRoutes(app, { db, requireAuth, desiredRoleToDbRole });
 registerAdminRoutes(app, { db, requireAdmin, desiredAdminRoleToDbRole });
 registerMarketplaceRoutes(app, { db, upload, requireAuth });
+registerNotificationRoutes(app, { db, requireAuth });
 registerWeatherRoutes(app);
 registerNewsRoutes(app, { db, requireAuth });
-registerNotificationRoutes(app, { db, requireAuth });
 
 // Add error handling middleware at the end (catches multer and request errors)
 app.use(errorHandler);
 
-// Start the server on port 3000
-const PORT = 3000;
+// Start the server on Render-assigned port in production, fallback to 3000 locally
+const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

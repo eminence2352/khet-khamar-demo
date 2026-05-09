@@ -156,6 +156,50 @@ async function seed() {
       userIds[user.mobile] = await upsertUser(connection, user);
     }
 
+    const connectionPairsByMobile = [
+      ['01700000001', '01700000002'],
+      ['01700000001', '01700000003'],
+      ['01700000001', '01700000005'],
+      ['01700000001', '01700000006'],
+      ['01700000001', '01700000009'],
+      ['01700000001', '01700000010'],
+      ['01700000001', '01700000011'],
+      ['01700000002', '01700000003'],
+      ['01700000002', '01700000005'],
+      ['01700000002', '01700000006'],
+      ['01700000002', '01700000008'],
+      ['01700000002', '01700000009'],
+      ['01700000003', '01700000005'],
+      ['01700000003', '01700000007'],
+      ['01700000003', '01700000008'],
+      ['01700000003', '01700000010'],
+      ['01700000005', '01700000006'],
+      ['01700000005', '01700000011'],
+      ['01700000006', '01700000012'],
+      ['01700000009', '01700000010'],
+      ['01700000009', '01700000011'],
+      ['01700000010', '01700000012'],
+    ];
+
+    for (const [mobileA, mobileB] of connectionPairsByMobile) {
+      const userA = userIds[mobileA];
+      const userB = userIds[mobileB];
+
+      if (!userA || !userB || userA === userB) {
+        continue;
+      }
+
+      const userOneId = Math.min(userA, userB);
+      const userTwoId = Math.max(userA, userB);
+
+      await connection.query(
+        'INSERT IGNORE INTO connections (user_one_id, user_two_id) VALUES (?, ?)',
+        [userOneId, userTwoId]
+      );
+    }
+
+    console.log('Seeded sample connections for social graph.');
+
     const postTemplates = [
       'Prepared raised beds for okra today. Soil moisture is stable.',
       'Irrigated the paddy field early morning to reduce evaporation loss.',
@@ -280,6 +324,40 @@ async function seed() {
       console.log('Seeded sample marketplace ads.');
     } else {
       console.log('marketplace_ads table already has data, skipping ads seed.');
+    }
+
+    // Seed some sample reviews for Hasan Traders (vendor at mobile 01700000003)
+    const hasanId = userIds['01700000003'];
+    if (hasanId) {
+      const [existingReviews] = await connection.query('SELECT COUNT(*) AS total FROM reviews WHERE seller_id = ?', [hasanId]);
+      const existingCount = Number(existingReviews[0].total) || 0;
+      if (existingCount === 0) {
+        const reviewerMobiles = ['01700000001', '01700000005', '01700000006', '01700000011'];
+        const reviewTexts = [
+          'Very helpful seller, timely delivery and good packing.',
+          'Seeds looked healthy and germinated well in my plot.',
+          'Good communication and fair price. Recommended.',
+          'Delivery was slightly delayed but product quality is excellent.'
+        ];
+        const ratings = [5, 5, 4, 4];
+
+        const insertValues = [];
+        for (let i = 0; i < reviewerMobiles.length; i += 1) {
+          const buyerId = userIds[reviewerMobiles[i]];
+          if (!buyerId) continue;
+          insertValues.push([buyerId, hasanId, null, ratings[i], reviewTexts[i]]);
+        }
+
+        if (insertValues.length > 0) {
+          // Prepare multi-row insert
+          const placeholders = insertValues.map(() => '(?, ?, ?, ?, ?)').join(', ');
+          const flat = insertValues.flat();
+          await connection.query(`INSERT INTO reviews (buyer_id, seller_id, marketplace_ad_id, rating, review_text) VALUES ${placeholders}`, flat);
+          console.log('Seeded sample reviews for Hasan Traders.');
+        }
+      } else {
+        console.log('Reviews for Hasan Traders already exist, skipping reviews seed.');
+      }
     }
 
     console.log('Database seeding complete.');

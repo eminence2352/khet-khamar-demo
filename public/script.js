@@ -16,29 +16,11 @@ const dictionary = {
     marketplace: "Market",
     weather: "Weather",
     profile: "Profile",
-    news: "News",
     guestModeMsg: "You're browsing as a guest.",
     loginToReact: "Login to post and react",
     login: "Login",
     signup: "Sign Up",
     logout: "Logout",
-    askingForHelp: "This is a help request",
-    postNewAd: "Post Your Product",
-    productTitle: "Product Title",
-    productTitlePlaceholder: "e.g., Organic Rice Seeds",
-    description: "Description",
-    descriptionPlaceholder: "Describe your product in detail...",
-    price: "Price",
-    quantity: "Quantity",
-    unit: "Unit",
-    unitPlaceholder: "e.g., kg, pieces",
-    category: "Category",
-    location: "Location",
-    productImage: "Product Image",
-    imageUploadHint: "Click to select image",
-    postAdBtn: "Post Product",
-    cancelBtn: "Clear",
-    marketSearchPlaceholder: "Search products",
   },
 };
 
@@ -270,6 +252,39 @@ function formatRoleLabel(role) {
   return role || "User";
 }
 
+async function copyTextToClipboard(text) {
+  const value = String(text || "").trim();
+  if (!value) {
+    return false;
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch (err) {
+      console.warn("navigator.clipboard.writeText failed", err);
+    }
+  }
+
+  try {
+    const tempInput = document.createElement("textarea");
+    tempInput.value = value;
+    tempInput.setAttribute("readonly", "true");
+    tempInput.style.position = "fixed";
+    tempInput.style.opacity = "0";
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    tempInput.setSelectionRange(0, tempInput.value.length);
+    const copied = document.execCommand("copy");
+    document.body.removeChild(tempInput);
+    return copied;
+  } catch (err) {
+    console.warn("Fallback copy failed", err);
+    return false;
+  }
+}
+
 // FUNCTION: renderPosts() - Generate HTML for feed posts and insert into container
 // Handles different post types (regular, news shares) with like/comment buttons
 function renderPosts(posts, container) {
@@ -307,7 +322,7 @@ function renderPosts(posts, container) {
         const newsSource = escapeHtml(post.sharedNewsSource || "Unknown source");
         const newsCategory = escapeHtml(post.sharedNewsCategory || "News");
         const newsUrl = post.sharedNewsUrl ? escapeHtml(post.sharedNewsUrl) : "";
-        const sourceLine = `${newsCategory} - ${newsSource}`;
+        const sourceLine = `${newsCategory} • ${newsSource}`;
 
         postBody = `
           ${textContent ? `<p class="post-text">${textContent}</p>` : ""}
@@ -346,14 +361,13 @@ function renderPosts(posts, container) {
         <footer class="post-actions" aria-label="Post actions">
           <button type="button" class="js-like-btn ${post.likedByCurrentUser ? "liked" : ""}" data-post-id="${safePostId}"><i class="fa-regular fa-heart"></i> <span>${dictionary.en.like} (${Number(post.likesCount) || 0})</span></button>
           <button type="button" class="js-comment-btn" data-post-id="${safePostId}"><i class="fa-regular fa-comment"></i> <span>${dictionary.en.comment} (${Number(post.commentsCount) || 0})</span></button>
-          <button type="button"><i class="fa-solid fa-share-nodes"></i> <span>${dictionary.en.share}</span></button>
+          <button type="button" class="js-share-btn" data-post-id="${safePostId}"><i class="fa-solid fa-share-nodes"></i> <span>${dictionary.en.share}</span></button>
+          
           ${canAdminModerate ? `<button type="button" class="js-admin-delete-post" data-post-id="${safePostId}"><i class="fa-solid fa-trash"></i> <span>Delete</span></button>` : ""}
         </footer>
         <section class="post-comment-panel" data-post-id="${safePostId}" hidden>
           <div class="post-comments-list" data-post-id="${safePostId}">
-            <p class="post-comments-empty">No comments yet.</p>
           </div>
-          <label class="post-comment-label" for="comment-input-${safePostId}">Write your comment</label>
           <textarea id="comment-input-${safePostId}" class="post-comment-input" data-post-id="${safePostId}" rows="2" placeholder="Write your comment..."></textarea>
           <div class="post-comment-actions">
             <button type="button" class="js-submit-comment" data-post-id="${safePostId}">Send</button>
@@ -408,7 +422,7 @@ function renderComments(comments, listContainer) {
   }
 
   if (!Array.isArray(comments) || comments.length === 0) {
-    listContainer.innerHTML = '<p class="post-comments-empty">No comments yet.</p>';
+    listContainer.innerHTML = '';
     return;
   }
 
@@ -423,7 +437,7 @@ function renderComments(comments, listContainer) {
         <article class="post-comment-item">
           <div class="post-comment-avatar">${commenterInitials}</div>
           <div class="post-comment-body">
-            <p class="post-comment-meta"><strong>${commenterName}</strong> - ${createdText}</p>
+            <p class="post-comment-meta"><strong>${commenterName}</strong> • ${createdText}</p>
             <p class="post-comment-text">${commentText}</p>
           </div>
         </article>
@@ -470,7 +484,48 @@ function formatPrice(ad) {
     ? priceValue.toFixed(2).replace(/\.00$/, "")
     : String(ad.price || "0");
   const unit = ad.unit ? ` / ${escapeHtml(ad.unit)}` : "";
-  return `Rs ${safePrice}${unit}`;
+  return `৳ ${safePrice}${unit}`;
+}
+
+function getMarketplaceImageUrl(imagePath) {
+  const safePath = String(imagePath || "").trim();
+  if (!safePath) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(safePath) || safePath.startsWith("/")) {
+    return safePath;
+  }
+
+  return `/${safePath.replace(/^\/+/, "")}`;
+}
+
+// Helper: load reviews for a seller and render into container (global)
+async function loadSellerReviews(sellerId, container) {
+  if (!container) return;
+  container.innerHTML = 'Loading reviews...';
+  try {
+    const resp = await fetch(`/api/sellers/${sellerId}/reviews`);
+    if (!resp.ok) throw new Error('Failed');
+    const rows = await resp.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      container.innerHTML = '<div class="request-item"><p class="request-item-name">No reviews yet.</p></div>';
+      return;
+    }
+
+    container.innerHTML = rows
+      .map((r) => `
+        <div class="request-item">
+          <p class="request-item-name"><strong>${escapeHtml(r.reviewerName || 'Anonymous')}</strong> • ${r.rating}/5</p>
+          <p class="activity-item-text">${escapeHtml(r.comment || '')}</p>
+          <p class="activity-meta">${formatRelativeTime(r.createdAt)}</p>
+        </div>
+      `)
+      .join('');
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="request-item"><p class="request-item-name">Unable to load reviews.</p></div>';
+  }
 }
 
 function renderMarketplaceAds(ads, marketplaceGrid) {
@@ -488,196 +543,187 @@ function renderMarketplaceAds(ads, marketplaceGrid) {
       const productTitle = escapeHtml(ad.productTitle || "Untitled Product");
       const sellerName = escapeHtml(ad.sellerName || "Unknown Seller");
       const sellerMobile = escapeHtml(ad.sellerMobile || "N/A");
+      const description = escapeHtml(ad.description || "No description provided.");
+      const quantity = Number.isInteger(Number(ad.quantity)) && Number(ad.quantity) > 0 ? Number(ad.quantity) : null;
+      const unitLabel = ad.unit ? escapeHtml(ad.unit) : "";
+      const locationLabel = escapeHtml(ad.location || "Unknown location");
       const verifiedBadge = ad.isVerifiedSeller
         ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>'
         : "";
-      const imageIconClass = getMarketplaceIconClass(ad);
       const sellerProfileUrl = profileUrlForUser(ad.sellerId);
+      const imageUrl = getMarketplaceImageUrl(ad.imagePath);
+      const mediaMarkup = imageUrl
+        ? `<img class="market-image-img" src="${escapeHtml(imageUrl)}" alt="${productTitle}" loading="lazy" />`
+        : `<div class="market-image-fallback"><i class="fa-solid ${getMarketplaceIconClass(ad)}"></i><span>Product Image</span></div>`;
 
       return `
-      <article class="market-card">
+      <article class="market-card" data-market-id="${Number(ad.id) || 0}" tabindex="0" role="button" aria-expanded="false">
         <div class="market-image">
-          <i class="fa-solid ${imageIconClass}"></i>
-          <span>Product Image</span>
+          ${mediaMarkup}
+          <span class="market-image-badge">${escapeHtml(ad.category || "Other")}</span>
         </div>
         <div class="market-body">
-          <h2 class="market-title">${productTitle}</h2>
           <p class="market-price">${formatPrice(ad)}</p>
+          <h2 class="market-title">${productTitle}</h2>
           <p class="market-seller">
             <a class="post-profile-link" href="${sellerProfileUrl}">${sellerName}</a>
             ${verifiedBadge}
           </p>
-          <div class="market-rating" aria-label="5 star rating">
-            <i class="fa-solid fa-star"></i>
-            <i class="fa-solid fa-star"></i>
-            <i class="fa-solid fa-star"></i>
-            <i class="fa-solid fa-star"></i>
-            <i class="fa-solid fa-star"></i>
+          <p class="market-preview">${description}</p>
+          <div class="market-meta-row">
+            <span class="market-meta-chip">${locationLabel}</span>
+            ${quantity ? `<span class="market-meta-chip">${quantity} ${unitLabel || "units"}</span>` : ""}
+            <span class="market-meta-chip">${escapeHtml(ad.category || "Other")}</span>
           </div>
-          <button class="call-seller-btn" type="button">Call Seller: ${sellerMobile}</button>
+          <div class="market-actions" aria-label="Marketplace item actions">
+            <a class="call-seller-btn market-action-link" href="tel:${sellerMobile}">Call Seller</a>
+            <a class="call-seller-btn market-action-link secondary" href="${sellerProfileUrl}">View Seller</a>
+            ${Number(ad.sellerId) === Number(authState.userId) ? '<button class="market-edit-btn market-action-link" type="button">Edit</button>' : ''}
+          </div>
+          <div class="market-details">
+            <p class="market-detail-line"><strong>Seller:</strong> ${sellerName}</p>
+            <p class="market-detail-line"><strong>Mobile:</strong> ${sellerMobile}</p>
+            <p class="market-detail-line"><strong>Location:</strong> ${locationLabel}</p>
+            <p class="market-detail-line"><strong>Category:</strong> ${escapeHtml(ad.category || "Other")}</p>
+          </div>
+          <button class="market-expand-btn" type="button">View details</button>
         </div>
       </article>`;
     })
     .join("");
-}
 
-// ============================================
-// NOTIFICATION CENTER
-// ============================================
-let notificationRefreshInterval = null;
+  const marketCards = marketplaceGrid.querySelectorAll(".market-card");
+  marketCards.forEach((card) => {
+    const details = card.querySelector(".market-details");
+    const expandBtn = card.querySelector(".market-expand-btn");
 
-async function fetchNotifications() {
-  try {
-    const response = await fetch("/api/notifications?limit=50");
-    if (!response.ok) {
-      throw new Error("Failed to fetch notifications");
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching notifications:", error);
-    return { notifications: [], unreadCount: 0 };
-  }
-}
-
-function updateNotificationBadge(unreadCount) {
-  const badge = document.getElementById("notificationBadge");
-  if (!badge) return;
-
-  if (unreadCount > 0) {
-    badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
-    badge.style.display = "block";
-  } else {
-    badge.style.display = "none";
-  }
-}
-
-function formatTimeAgo(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
-
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString();
-}
-
-function renderNotifications(notifications) {
-  const notificationList = document.getElementById("notificationList");
-  if (!notificationList) return;
-
-  if (!notifications || notifications.length === 0) {
-    notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
-    return;
-  }
-
-  notificationList.innerHTML = notifications
-    .map((notif) => {
-      const actorName = escapeHtml(notif.actorName || "Someone");
-      const timeAgo = formatTimeAgo(notif.createdAt);
-      let message = "";
-      let icon = "";
-
-      if (notif.notificationType === "like") {
-        message = `${actorName} liked your post`;
-        icon = "fa-heart";
-      } else if (notif.notificationType === "comment") {
-        message = `${actorName} commented on your post`;
-        icon = "fa-comment";
-      } else if (notif.notificationType === "help_request") {
-        message = `${actorName} posted a help request`;
-        icon = "fa-circle-exclamation";
+    const toggleDetails = () => {
+      if (!details) {
+        return;
       }
 
-      const readClass = notif.isRead ? "notification-item-read" : "notification-item-unread";
+      const isOpen = card.classList.toggle("is-expanded");
+      details.hidden = !isOpen;
+      card.setAttribute("aria-expanded", String(isOpen));
+      if (expandBtn) {
+        expandBtn.textContent = isOpen ? "Hide details" : "View details";
+      }
+    };
 
-      return `
-        <div class="notification-item ${readClass}" data-notification-id="${notif.id}">
-          <div class="notification-avatar">${escapeHtml(getAvatarInitials(notif.actorName || "?"))}</div>
-          <div class="notification-content">
-            <div class="notification-message">
-              <i class="fa-solid ${icon}"></i>
-              <span>${message}</span>
-            </div>
-            <div class="notification-preview">${escapeHtml((notif.postContent || "").substring(0, 50))}${(notif.postContent || "").length > 50 ? "..." : ""}</div>
-            <div class="notification-time">${timeAgo}</div>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("a, button")) {
+        return;
+      }
+      toggleDetails();
+    });
 
-  // Add click handlers to notifications
-  const notificationItems = notificationList.querySelectorAll(".notification-item");
-  notificationItems.forEach((item) => {
-    item.addEventListener("click", async () => {
-      const notifId = item.dataset.notificationId;
-      if (item.classList.contains("notification-item-unread")) {
-        try {
-          await fetch(`/api/notifications/${notifId}/read`, { method: "POST" });
-          item.classList.remove("notification-item-unread");
-          item.classList.add("notification-item-read");
-          await loadNotifications();
-        } catch (error) {
-          console.error("Error marking notification as read:", error);
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleDetails();
+      }
+    });
+
+    if (expandBtn) {
+      expandBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleDetails();
+      });
+    }
+  });
+
+  
+
+  // Wire up dynamically created edit and review buttons
+  marketCards.forEach((card) => {
+    const details = card.querySelector('.market-details');
+    const editBtn = card.querySelector('.market-edit-btn');
+
+    // When details become visible, load reviews
+    const observer = new MutationObserver(() => {
+      if (details && !details.hidden) {
+        const reviewsList = details.querySelector('.reviews-list');
+        const sid = reviewsList ? Number(reviewsList.dataset.sellerId) : null;
+        if (sid && reviewsList) loadSellerReviews(sid, reviewsList);
+      }
+    });
+    if (details) {
+      observer.observe(details, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    if (editBtn) {
+      editBtn.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const marketId = Number(card.getAttribute('data-market-id')) || 0;
+        if (!marketId) return;
+
+        // Build simple inline edit form inside details
+        const existingTitle = card.querySelector('.market-title') ? card.querySelector('.market-title').textContent.trim() : '';
+        const existingPrice = card.querySelector('.market-price') ? card.querySelector('.market-price').textContent.replace(/[^0-9.]/g, '') : '';
+        const existingPreview = card.querySelector('.market-preview') ? card.querySelector('.market-preview').textContent.trim() : '';
+
+        const formHtml = `
+          <div class="market-edit-form">
+            <label>Title: <input class="edit-title" value="${escapeHtml(existingTitle)}" /></label>
+            <label>Price: <input class="edit-price" value="${escapeHtml(existingPrice)}" /></label>
+            <label>Description: <textarea class="edit-desc">${escapeHtml(existingPreview)}</textarea></label>
+            <label>Image: <input type="file" class="edit-image" accept="image/*" /></label>
+            <div style="margin-top:0.5rem;"><button class="save-edit-btn">Save</button> <button class="cancel-edit-btn">Cancel</button></div>
+          </div>`;
+
+        if (!details) return;
+        let editWrap = details.querySelector('.market-edit-form');
+        if (!editWrap) {
+          details.insertAdjacentHTML('beforeend', formHtml);
+          editWrap = details.querySelector('.market-edit-form');
         }
-      }
-    });
-  });
-}
 
-async function loadNotifications() {
-  const data = await fetchNotifications();
-  updateNotificationBadge(data.unreadCount);
-  renderNotifications(data.notifications);
-}
+        const saveBtn = editWrap.querySelector('.save-edit-btn');
+        const cancelBtn = editWrap.querySelector('.cancel-edit-btn');
+        const titleInput = editWrap.querySelector('.edit-title');
+        const priceInput = editWrap.querySelector('.edit-price');
+        const descInput = editWrap.querySelector('.edit-desc');
+        const imageInput = editWrap.querySelector('.edit-image');
 
-function initNotificationCenter() {
-  const notificationToggle = document.getElementById("notificationToggle");
-  const notificationPanel = document.getElementById("notificationPanel");
-  const readAllBtn = document.getElementById("readAllBtn");
+        cancelBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          editWrap.remove();
+        });
 
-  if (!notificationToggle || !notificationPanel) return;
+        saveBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const fd = new FormData();
+          fd.append('productTitle', titleInput.value || '');
+          fd.append('price', priceInput.value || '0');
+          fd.append('description', descInput.value || '');
+          if (imageInput.files && imageInput.files[0]) fd.append('image', imageInput.files[0]);
 
-  // Toggle notification panel visibility
-  notificationToggle.addEventListener("click", async () => {
-    if (notificationPanel.style.display === "none") {
-      notificationPanel.style.display = "block";
-      await loadNotifications();
-    } else {
-      notificationPanel.style.display = "none";
+          try {
+            const resp = await fetch(`/api/marketplace/${marketId}`, { method: 'PUT', body: fd });
+            const data = await resp.json();
+            if (!resp.ok) {
+              showNotice(data.message || 'Failed to update ad', 'error');
+              return;
+            }
+            showNotice('Ad updated', 'success');
+            // Refresh the marketplace grid by re-fetching ads (if a load function exists globally)
+            if (typeof window.reloadMarketplace === 'function') {
+              window.reloadMarketplace();
+            }
+            // remove edit form
+            editWrap.remove();
+          } catch (err) {
+            console.error(err);
+            showNotice('Failed to update ad', 'error');
+          }
+        });
+      });
     }
+
+    
   });
-
-  // Mark all as read button
-  if (readAllBtn) {
-    readAllBtn.addEventListener("click", async () => {
-      try {
-        await fetch("/api/notifications/read-all", { method: "POST" });
-        await loadNotifications();
-      } catch (error) {
-        console.error("Error marking all as read:", error);
-      }
-    });
-  }
-
-  // Close panel when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest("#notificationCenter")) {
-      notificationPanel.style.display = "none";
-    }
-  });
-
-  // Load notifications immediately and refresh every 30 seconds
-  loadNotifications();
-  if (notificationRefreshInterval) {
-    clearInterval(notificationRefreshInterval);
-  }
-  notificationRefreshInterval = setInterval(loadNotifications, 30000);
 }
 
 // ============================================
@@ -685,9 +731,12 @@ function initNotificationCenter() {
 // ============================================
 function initFeedPage() {
   const feedList = document.querySelector(".feed-list");
+  const featuredMarketplaceList = document.getElementById("featuredMarketplaceList");
+  const homeConnectionsList = document.getElementById("homeConnectionsList");
   const postBtn = document.querySelector(".post-btn");
   const postTextInput = document.getElementById("postText");
   const postPhotoInput = document.getElementById("postPhoto");
+  const isHelpRequestInput = document.getElementById("isHelpRequest");
   const navPostBtn = document.querySelector(".nav-post");
   const createPostCard = document.getElementById("createPostCard");
   const composerAvatar = createPostCard ? createPostCard.querySelector(".avatar-owner") : null;
@@ -699,24 +748,107 @@ function initFeedPage() {
   let currentPreviewUrl = null;
   let composerSelectedImageFile = null;
 
-  function clearImagePreview({ clearInput = false } = {}) {
-    composerSelectedImageFile = null;
-
-    if (currentPreviewUrl) {
-      URL.revokeObjectURL(currentPreviewUrl);
-      currentPreviewUrl = null;
+  function renderMarketplaceRailItems(rows) {
+    if (!featuredMarketplaceList) {
+      return;
     }
 
-    if (postImagePreview) {
-      postImagePreview.src = "";
+    if (!Array.isArray(rows) || rows.length === 0) {
+      featuredMarketplaceList.innerHTML = '<p class="rail-empty">No marketplace items yet.</p>';
+      return;
     }
 
-    if (postImagePreviewWrap) {
-      postImagePreviewWrap.hidden = true;
+    featuredMarketplaceList.innerHTML = rows
+      .map((ad) => {
+        const sellerName = escapeHtml(ad.sellerName || "Unknown seller");
+        const productTitle = escapeHtml(ad.productTitle || "Untitled product");
+        const priceText = escapeHtml(formatPrice(ad));
+        const sellerProfileUrl = profileUrlForUser(ad.sellerId);
+        return `
+          <article class="rail-item">
+            <h3 class="rail-item-title">${productTitle}</h3>
+            <p class="rail-item-meta">${priceText} • ${sellerName}</p>
+            <a class="rail-item-link" href="marketplace.html">View in marketplace</a>
+            <a class="rail-item-link" href="${sellerProfileUrl}">Seller profile</a>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  function renderConnectionsRailItems(rows) {
+    if (!homeConnectionsList) {
+      return;
     }
 
-    if (clearInput && postPhotoInput) {
-      postPhotoInput.value = "";
+    if (!Array.isArray(rows) || rows.length === 0) {
+      homeConnectionsList.innerHTML = '<p class="rail-empty">No connections yet.</p>';
+      return;
+    }
+
+    homeConnectionsList.innerHTML = rows
+      .slice(0, 12)
+      .map((row) => {
+        const fullName = escapeHtml(row.fullName || "Unknown user");
+        const roleLabel = escapeHtml(formatRoleLabel(row.role));
+        const location = escapeHtml(row.districtLocation || "Unknown location");
+        return `
+          <article class="rail-item">
+            <h3 class="rail-item-title">${fullName}</h3>
+            <p class="rail-item-meta">${roleLabel} • ${location}</p>
+            <a class="rail-item-link" href="${profileUrlForUser(row.userId)}">Open profile</a>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  async function loadHomeRightRail() {
+    if (featuredMarketplaceList) {
+      featuredMarketplaceList.innerHTML = '<p class="rail-empty">Loading marketplace picks...</p>';
+    }
+
+    if (homeConnectionsList) {
+      homeConnectionsList.innerHTML = '<p class="rail-empty">Loading connections...</p>';
+    }
+
+    try {
+      const marketplaceResponse = await fetch("/api/marketplace");
+      if (marketplaceResponse.ok) {
+        const marketplaceRows = await marketplaceResponse.json();
+        const items = Array.isArray(marketplaceRows) ? [...marketplaceRows] : [];
+        items.sort(() => Math.random() - 0.5);
+        renderMarketplaceRailItems(items.slice(0, 5));
+      } else {
+        renderMarketplaceRailItems([]);
+      }
+    } catch (error) {
+      console.error("Failed to load marketplace rail:", error);
+      renderMarketplaceRailItems([]);
+    }
+
+    const state = await getAuthState();
+    if (!state.authenticated) {
+      if (homeConnectionsList) {
+        homeConnectionsList.innerHTML = '<p class="rail-empty">Login to view your connections.</p>';
+      }
+      return;
+    }
+
+    try {
+      const connectionsResponse = await fetch("/api/connections");
+      if (!connectionsResponse.ok) {
+        homeConnectionsList.innerHTML = '<p class="rail-empty">Unable to load connections.</p>';
+        return;
+      }
+
+      const connectionsRows = await connectionsResponse.json();
+      renderConnectionsRailItems(connectionsRows);
+    } catch (error) {
+      console.error("Failed to load home connections:", error);
+      if (homeConnectionsList) {
+        homeConnectionsList.innerHTML = '<p class="rail-empty">Unable to load connections.</p>';
+      }
     }
   }
 
@@ -754,6 +886,52 @@ function initFeedPage() {
 
   if (!feedList) {
     return;
+  }
+
+  function updateComposerAvatar(profile) {
+    if (!composerAvatar) {
+      return;
+    }
+
+    const profileName = profile && profile.full_name ? profile.full_name : "Anonymous User";
+    composerAvatar.textContent = getAvatarInitials(profileName);
+  }
+
+  getCurrentUserProfile().then((me) => {
+    if (me && me.role === "Admin") {
+      window.location.href = "/admin.html";
+      return;
+    }
+
+    updateComposerAvatar(me);
+
+    fetchPosts({
+      container: feedList,
+      targetPostId: Number.isInteger(targetPostIdParam) && targetPostIdParam > 0 ? targetPostIdParam : null,
+    });
+  });
+
+  loadHomeRightRail();
+
+  function clearImagePreview({ clearInput = false } = {}) {
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
+      currentPreviewUrl = null;
+    }
+
+    if (postImagePreview) {
+      postImagePreview.src = "";
+    }
+
+    if (postImagePreviewWrap) {
+      postImagePreviewWrap.hidden = true;
+    }
+
+    if (clearInput && postPhotoInput) {
+      postPhotoInput.value = "";
+    }
+
+    composerSelectedImageFile = null;
   }
 
   function setComposerImageFile(file) {
@@ -825,8 +1003,7 @@ function initFeedPage() {
   async function submitComposerPost() {
     const textContent = postTextInput ? postTextInput.value.trim() : "";
     const selectedImageFile = composerSelectedImageFile || (postPhotoInput && postPhotoInput.files ? postPhotoInput.files[0] : null);
-    const isHelpRequestCheckbox = document.getElementById("isHelpRequest");
-    const isHelpRequest = isHelpRequestCheckbox ? isHelpRequestCheckbox.checked : false;
+    const isHelpRequest = Boolean(isHelpRequestInput && isHelpRequestInput.checked);
 
     if (!textContent && !selectedImageFile) {
       if (postTextInput) {
@@ -837,7 +1014,7 @@ function initFeedPage() {
 
     const formData = new FormData();
     formData.append("textContent", textContent);
-    formData.append("isHelpRequest", isHelpRequest);
+    formData.append("isHelpRequest", isHelpRequest ? "true" : "false");
     if (selectedImageFile) {
       formData.append("image", selectedImageFile);
     }
@@ -854,8 +1031,8 @@ function initFeedPage() {
     if (postTextInput) {
       postTextInput.value = "";
     }
-    if (isHelpRequestCheckbox) {
-      isHelpRequestCheckbox.checked = false;
+    if (isHelpRequestInput) {
+      isHelpRequestInput.checked = false;
     }
     clearImagePreview({ clearInput: true });
     await fetchPosts({ container: feedList });
@@ -863,6 +1040,36 @@ function initFeedPage() {
   }
 
   feedList.addEventListener("click", async (event) => {
+    const shareButton = event.target.closest('.js-share-btn');
+    if (shareButton) {
+      const postId = Number.parseInt(shareButton.dataset.postId, 10);
+      if (!Number.isInteger(postId) || postId <= 0) return;
+      const postUrl = window.location.origin + '/' + feedPostUrl(postId);
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Khet-Khamar post', url: postUrl });
+          showNotice('Shared via system share', 'success');
+        } else {
+          const copied = await copyTextToClipboard(postUrl);
+          if (copied) {
+            showNotice('Post link copied to clipboard', 'success');
+          } else {
+            window.prompt('Copy this link', postUrl);
+            showNotice('Copy the link to share this post.', 'info');
+          }
+        }
+      } catch (err) {
+        console.error('Share failed', err);
+        const copied = await copyTextToClipboard(postUrl);
+        if (copied) {
+          showNotice('Post link copied to clipboard', 'success');
+        } else {
+          window.prompt('Copy this link', postUrl);
+          showNotice('Copy the link to share this post.', 'info');
+        }
+      }
+      return;
+    }
     const likeButton = event.target.closest(".js-like-btn");
     if (likeButton) {
       const state = await getAuthState();
@@ -1040,6 +1247,176 @@ function initFeedPage() {
     });
   }
 
+  // Notification center wiring (header notification UI)
+  const notificationToggle = document.getElementById('notificationToggle');
+  const notificationPanel = document.getElementById('notificationPanel');
+  const notificationBadge = document.getElementById('notificationBadge');
+  const notificationList = document.getElementById('notificationList');
+  const readAllBtn = document.getElementById('readAllBtn');
+
+  async function loadNotifications() {
+    const state = await getAuthState();
+    if (!state.authenticated) {
+      if (notificationToggle) notificationToggle.style.display = 'none';
+      if (notificationPanel) notificationPanel.style.display = 'none';
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/notifications');
+      if (!resp.ok) throw new Error('Failed');
+      const data = await resp.json();
+      const unread = Number(data.unreadCount || 0);
+      if (notificationBadge) {
+        notificationBadge.style.display = unread > 0 ? 'inline-block' : 'none';
+        notificationBadge.textContent = unread > 9 ? '9+' : String(unread);
+      }
+      if (notificationToggle) {
+        if (unread > 0) {
+          notificationToggle.classList.add('has-unread');
+        } else {
+          notificationToggle.classList.remove('has-unread');
+        }
+      }
+
+      if (!notificationList) return;
+      const rows = Array.isArray(data.notifications) ? data.notifications : [];
+
+      const describeNotification = (notification) => {
+        const actorName = escapeHtml(notification.actorName || 'Someone');
+        switch (String(notification.notificationType || '').trim()) {
+          case 'post_like':
+          case 'like':
+            return `${actorName} liked your post`;
+          case 'post_comment':
+          case 'comment':
+            return `${actorName} commented on your post`;
+          case 'help_request':
+            return `${actorName} is asking for help`;
+          case 'connection_request':
+            return `${actorName} sent you a connection request`;
+          case 'connection_accepted':
+            return `${actorName} accepted your connection request`;
+          case 'new_follower':
+            return `${actorName} started following you`;
+          case 'seller_review':
+            return `${actorName} reviewed your seller profile`;
+          default:
+            return `${actorName} sent you a notification`;
+        }
+      };
+
+      if (rows.length === 0) {
+        notificationList.innerHTML = '<div class="request-item"><p class="request-item-name">No notifications</p></div>';
+        return;
+      }
+
+      notificationList.innerHTML = rows
+        .map((n) => `
+          <article class="notification-item" data-notification-id="${n.id}" data-post-id="${n.postId || ''}">
+            <p class="request-item-name">${describeNotification(n)}</p>
+            ${n.postContent ? `<p class="activity-item-text">${escapeHtml(n.postContent || '')}</p>` : ''}
+            <p class="activity-meta">${formatRelativeTime(n.createdAt)}</p>
+            <div class="notification-actions">
+              ${n.postId ? `<a class="action-btn secondary" href="${feedPostUrl(n.postId)}">View post</a>` : ''}
+              ${n.actorId ? `<a class="action-btn secondary" href="${profileUrlForUser(n.actorId)}">View profile</a>` : ''}
+              <button class="action-btn mark-read-btn" data-notification-id="${n.id}">Mark read</button>
+            </div>
+          </article>
+        `).join('');
+    } catch (err) {
+      console.error('Load notifications failed', err);
+      if (notificationList) notificationList.innerHTML = '<div class="request-item"><p class="request-item-name">Unable to load notifications.</p></div>';
+    }
+  }
+
+  if (notificationToggle) {
+    notificationToggle.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!notificationPanel) return;
+      const isOpen = notificationPanel.style.display === 'block';
+      if (isOpen) {
+        notificationPanel.style.display = 'none';
+      } else {
+        notificationPanel.style.display = 'block';
+        await loadNotifications();
+      }
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!notificationPanel || !notificationToggle) return;
+    const clickedInside = notificationPanel.contains(event.target) || notificationToggle.contains(event.target);
+    if (!clickedInside) {
+      notificationPanel.style.display = 'none';
+    }
+  });
+
+  if (readAllBtn) {
+    readAllBtn.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/notifications/read-all', { method: 'POST' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          showNotice(data.message || 'Failed to mark notifications', 'error');
+          return;
+        }
+        if (notificationBadge) notificationBadge.style.display = 'none';
+        await loadNotifications();
+      } catch (err) {
+        console.error(err);
+        showNotice('Failed to update notifications', 'error');
+      }
+    });
+  }
+
+  // Handle mark-read clicks inside notification list
+  if (notificationList) {
+    notificationList.addEventListener('click', async (ev) => {
+      const markReadBtn = ev.target.closest('.mark-read-btn');
+      const item = ev.target.closest('.notification-item');
+
+      if (markReadBtn) {
+        const nid = Number(markReadBtn.dataset.notificationId);
+        if (!nid) return;
+        try {
+          const resp = await fetch(`/api/notifications/${nid}/read`, { method: 'POST' });
+          const data = await resp.json();
+          if (!resp.ok) {
+            showNotice(data.message || 'Failed to mark read', 'error');
+            return;
+          }
+          await loadNotifications();
+        } catch (err) {
+          console.error(err);
+          showNotice('Failed to update notification', 'error');
+        }
+        return;
+      }
+
+      if (!item || ev.target.closest('a, button')) {
+        return;
+      }
+
+      const notificationId = Number(item.dataset.notificationId);
+      const postId = Number(item.dataset.postId);
+
+      if (notificationId) {
+        try {
+          await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+        } catch (err) {
+          console.error('Failed to mark notification read on click', err);
+        }
+      }
+
+      if (Number.isInteger(postId) && postId > 0) {
+        window.location.href = `/${feedPostUrl(postId)}`;
+      }
+    });
+  }
+
+  loadNotifications();
+
   if (navPostBtn) {
     navPostBtn.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -1084,9 +1461,6 @@ function initFeedPage() {
           window.location.href = "/index.html";
         });
       }
-
-      // Initialize notification center for authenticated users
-      initNotificationCenter();
       return;
     }
 
@@ -1103,8 +1477,6 @@ function initFeedPage() {
     }
     postTextInput.focus();
   }
-
-  fetchPosts({ container: feedList, targetPostId: Number.isInteger(targetPostIdParam) ? targetPostIdParam : null });
 }
 
 // ============================================
@@ -1113,18 +1485,123 @@ function initFeedPage() {
 function initMarketplacePage() {
   const marketplaceGrid = document.querySelector(".market-grid");
   if (!marketplaceGrid) {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initMarketplacePage, { once: true });
-    } else {
-      window.setTimeout(initMarketplacePage, 0);
-    }
     return;
   }
 
   let allMarketplaceAds = [];
+  const sellerPostingCard = document.getElementById("sellerPostingCard");
+  const marketplaceForm = document.getElementById("marketplaceForm");
+  const adTitleInput = document.getElementById("adTitle");
+  const adDescriptionInput = document.getElementById("adDescription");
+  const adPriceInput = document.getElementById("adPrice");
+  const adQuantityInput = document.getElementById("adQuantity");
+  const adUnitInput = document.getElementById("adUnit");
+  const adCategoryInput = document.getElementById("adCategory");
+  const adLocationInput = document.getElementById("adLocation");
+  const adImageInput = document.getElementById("adImage");
+  const adImagePreviewWrap = document.getElementById("adImagePreview");
+  const adImagePreviewImg = document.getElementById("adImagePreviewImg");
+  const removeAdImageBtn = document.getElementById("removeAdImage");
   const searchInput = document.querySelector(".market-filter-item.search-field input");
   const categorySelect = document.getElementById("categorySelect");
   const locationSelect = document.getElementById("locationSelect");
+  let selectedAdImageFile = null;
+  let adImagePreviewUrl = null;
+
+  function clearAdImagePreview({ clearInput = false } = {}) {
+    if (adImagePreviewUrl) {
+      URL.revokeObjectURL(adImagePreviewUrl);
+      adImagePreviewUrl = null;
+    }
+
+    if (adImagePreviewImg) {
+      adImagePreviewImg.src = "";
+    }
+
+    if (adImagePreviewWrap) {
+      adImagePreviewWrap.style.display = "none";
+    }
+
+    if (clearInput && adImageInput) {
+      adImageInput.value = "";
+    }
+
+    selectedAdImageFile = null;
+  }
+
+  function setAdImageFile(file) {
+    if (!file) {
+      clearAdImagePreview();
+      return;
+    }
+
+    if (!String(file.type || "").startsWith("image/")) {
+      clearAdImagePreview({ clearInput: true });
+      showNotice("Please select a valid image file.", "error");
+      return;
+    }
+
+    clearAdImagePreview();
+    selectedAdImageFile = file;
+    adImagePreviewUrl = URL.createObjectURL(file);
+
+    if (adImagePreviewImg) {
+      adImagePreviewImg.src = adImagePreviewUrl;
+    }
+
+    if (adImagePreviewWrap) {
+      adImagePreviewWrap.style.display = "block";
+    }
+  }
+
+  async function submitMarketplaceAd() {
+    const title = String(adTitleInput ? adTitleInput.value : "").trim();
+    const description = String(adDescriptionInput ? adDescriptionInput.value : "").trim();
+    const price = String(adPriceInput ? adPriceInput.value : "").trim();
+    const quantity = String(adQuantityInput ? adQuantityInput.value : "").trim();
+    const unit = String(adUnitInput ? adUnitInput.value : "").trim();
+    const category = String(adCategoryInput ? adCategoryInput.value : "").trim();
+    const location = String(adLocationInput ? adLocationInput.value : "").trim();
+    const imageFile = selectedAdImageFile || (adImageInput && adImageInput.files ? adImageInput.files[0] : null);
+
+    if (!title || !price || !category || !location) {
+      showNotice("Title, price, category, and location are required.", "error");
+      return false;
+    }
+
+    const formData = new FormData();
+    formData.append("productTitle", title);
+    formData.append("description", description);
+    formData.append("price", price);
+    formData.append("category", category);
+    formData.append("location", location);
+    formData.append("quantity", quantity);
+    formData.append("unit", unit);
+
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
+
+    const response = await fetch("/api/marketplace", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      showNotice(data.message || "Failed to post product.", "error");
+      return false;
+    }
+
+    showNotice("Product posted successfully.", "success");
+
+    if (marketplaceForm) {
+      marketplaceForm.reset();
+    }
+    clearAdImagePreview({ clearInput: true });
+    await fetchMarketplaceAds();
+    return true;
+  }
 
   function filterMarketplaceAds() {
     if (!Array.isArray(allMarketplaceAds)) {
@@ -1162,6 +1639,58 @@ function initMarketplacePage() {
     locationSelect.addEventListener("change", filterMarketplaceAds);
   }
 
+  if (adImageInput) {
+    adImageInput.addEventListener("change", () => {
+      const file = adImageInput.files ? adImageInput.files[0] : null;
+      setAdImageFile(file);
+    });
+  }
+
+  if (removeAdImageBtn) {
+    removeAdImageBtn.addEventListener("click", () => {
+      clearAdImagePreview({ clearInput: true });
+    });
+  }
+
+  if (marketplaceForm) {
+    marketplaceForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      try {
+        const state = await getAuthState();
+        if (!state.authenticated) {
+          window.location.href = "/login.html";
+          return;
+        }
+
+        const profile = await getCurrentUserProfile();
+        const role = String(profile && profile.role ? profile.role : "");
+        const canPost = role === "General Vendor" || role === "Verified Vendor";
+
+        if (!canPost) {
+          showNotice("Only sellers can post marketplace ads.", "error");
+          return;
+        }
+
+        await submitMarketplaceAd();
+      } catch (error) {
+        console.error(error);
+        showNotice("Failed to post product.", "error");
+      }
+    });
+  }
+
+  getCurrentUserProfile().then((profile) => {
+    const role = String(profile && profile.role ? profile.role : "");
+    const canPost = role === "General Vendor" || role === "Verified Vendor";
+
+    if (!sellerPostingCard) {
+      return;
+    }
+
+    sellerPostingCard.style.display = canPost ? "block" : "none";
+  });
+
   async function fetchMarketplaceAds() {
     try {
       const response = await fetch("/api/marketplace");
@@ -1178,159 +1707,286 @@ function initMarketplacePage() {
   }
 
   fetchMarketplaceAds();
-  const sellerPostingCard = document.getElementById("sellerPostingCard");
-  const marketplaceForm = document.getElementById("marketplaceForm");
-  const adImage = document.getElementById("adImage");
-  const adImagePreview = document.getElementById("adImagePreview");
-  const adImagePreviewImg = document.getElementById("adImagePreviewImg");
-  const removeAdImageBtn = document.getElementById("removeAdImage");
-  let selectedAdImageFile = null;
+}
 
-    // Check if user is a seller and show posting form
-    async function checkSellerStatus() {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (!response.ok) {
-          if (sellerPostingCard) sellerPostingCard.style.display = "none";
-          return;
-        }
+function renderProfileSummary(profile) {
+  const profileCard = document.getElementById("profileCard");
+  if (!profileCard) {
+    return;
+  }
 
-        const profile = await response.json();
-        const isSeller = profile.role === "General Vendor" || profile.role === "Verified Vendor";
-        if (sellerPostingCard) {
-          sellerPostingCard.style.display = isSeller ? "block" : "none";
+  const initials = escapeHtml(getAvatarInitials(profile.fullName));
+  const roleBadge = profile.role === "Verified Expert"
+    ? '<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Expert</span>'
+    : profile.role === "General Vendor"
+      ? '<span class="seller-badge"><i class="fa-solid fa-store"></i> Seller</span>'
+      : "";
+  const roleLabel = escapeHtml(formatRoleLabel(profile.role));
+
+  profileCard.innerHTML = `
+    <div class="profile-card-top">
+      <div class="avatar avatar-owner">${initials}</div>
+      <div>
+        <h2 class="profile-name">${escapeHtml(profile.fullName)}</h2>
+        <p class="profile-role">${roleLabel} • ${escapeHtml(profile.districtLocation || "Unknown location")} ${roleBadge}</p>
+      </div>
+    </div>
+    <p class="profile-bio">${escapeHtml(profile.bio || "No bio yet.")}</p>
+    <div class="profile-stats">
+      <a class="profile-stat profile-stat-link" href="#profilePosts"><strong>${profile.postsCount}</strong><span>Posts</span></a>
+      <button class="profile-stat profile-stat-link" type="button" data-panel="connectionsPanel"><strong>${profile.connectionsCount}</strong><span>Connections</span></button>
+      <button class="profile-stat profile-stat-link" type="button" data-profile-link="followers"><strong>${profile.followersCount}</strong><span>Followers</span></button>
+      <button class="profile-stat profile-stat-link" type="button" data-profile-link="following"><strong>${profile.followingCount}</strong><span>Following</span></button>
+    </div>
+  `;
+
+  const followersLink = profileCard.querySelector('[data-profile-link="followers"]');
+  if (followersLink) {
+    followersLink.addEventListener("click", () => {
+      window.location.href = `connections.html?userId=${encodeURIComponent(profile.id)}&tab=followers`;
+    });
+  }
+
+  const followingLink = profileCard.querySelector('[data-profile-link="following"]');
+  if (followingLink) {
+    followingLink.addEventListener("click", () => {
+      window.location.href = `connections.html?userId=${encodeURIComponent(profile.id)}&tab=following`;
+    });
+  }
+
+  // Wire up stat buttons that open profile panels (e.g., Connections)
+  const panelButtons = profileCard.querySelectorAll("[data-panel]");
+  panelButtons.forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const panelId = btn.getAttribute("data-panel");
+      if (!panelId) return;
+      // Use the profile page's panel switching helper if available
+      if (typeof window.showProfilePanel === "function") {
+        window.showProfilePanel(panelId);
+      } else {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+          // hide other panels and show this one
+          document.querySelectorAll('.profile-panel').forEach((p) => (p.style.display = 'none'));
+          panel.style.display = 'block';
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      } catch (error) {
-        console.error("Error checking seller status:", error);
-        if (sellerPostingCard) sellerPostingCard.style.display = "none";
       }
-    }
+    });
+  });
+}
 
-    // Handle image preview for marketplace ad
-    if (adImage) {
-      adImage.addEventListener("change", (e) => {
-        const file = e.target.files ? e.target.files[0] : null;
-        if (file) {
-          selectedAdImageFile = file;
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            if (adImagePreview && adImagePreviewImg) {
-              adImagePreviewImg.src = event.target.result;
-              adImagePreview.style.display = "block";
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    }
+// Expose a global helper to switch visible profile panels
+window.showProfilePanel = function (panelId) {
+  if (!panelId) return;
+  const allowed = [
+    'profilePosts',
+    'connectionRequestsPanel',
+    'connectionsPanel',
+    'adminToolsPanel',
+    'likedPostsPanel',
+    'commentedPostsPanel',
+    'sellerReviewsPanel',
+  ];
 
-    // Handle remove image button
-    if (removeAdImageBtn) {
-      removeAdImageBtn.addEventListener("click", (e) => {
+  // If the requested panel isn't known, do nothing
+  if (!allowed.includes(panelId)) return;
+
+  // hide all profile panels
+  document.querySelectorAll('.profile-panel').forEach((p) => (p.style.display = 'none'));
+
+  const target = document.getElementById(panelId);
+  if (target) {
+    target.style.display = 'block';
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
+function renderProfileActions(profile, refreshProfile) {
+  const profileActions = document.getElementById("profileActions");
+  if (!profileActions) {
+    return;
+  }
+
+  profileActions.innerHTML = "";
+
+  if (profile.isOwnProfile) {
+    profileActions.innerHTML = `
+      <a class="action-btn" href="settings.html">Edit Profile</a>
+      <a class="action-btn secondary" href="connections.html?userId=${encodeURIComponent(profile.id)}">View Connections</a>
+    `;
+    // If owner is also a seller, show a quick 'View Reviews' action
+    if (profile.role === 'General Vendor' || profile.role === 'Verified Vendor') {
+      const viewReviewsBtn = document.createElement('a');
+      viewReviewsBtn.className = 'action-btn secondary';
+      viewReviewsBtn.href = '#';
+      viewReviewsBtn.textContent = 'View Reviews';
+      viewReviewsBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        selectedAdImageFile = null;
-        if (adImage) adImage.value = "";
-        if (adImagePreview) adImagePreview.style.display = "none";
+        window.showProfilePanel('sellerReviewsPanel');
+        const list = document.getElementById('sellerReviewsList');
+        if (list) loadSellerReviews(profile.id, list);
+      });
+      profileActions.appendChild(viewReviewsBtn);
+    }
+    // Show logout button wrapper
+    const logoutWrap = document.getElementById('profileLogoutWrap');
+    const profileLogoutBtn = document.getElementById('profileLogoutBtn');
+    if (logoutWrap && profileLogoutBtn) {
+      logoutWrap.style.display = 'block';
+      profileLogoutBtn.addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/index.html';
       });
     }
+    return;
+  }
 
-    // Handle marketplace form submission
-    if (marketplaceForm) {
-      marketplaceForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  if (!authState.authenticated) {
+    profileActions.innerHTML = '<a class="action-btn" href="login.html">Login to connect</a>';
+    return;
+  }
 
-        const formData = new FormData();
-        formData.append("productTitle", document.getElementById("adTitle").value);
-        formData.append("description", document.getElementById("adDescription").value);
-        formData.append("price", document.getElementById("adPrice").value);
-        formData.append("category", document.getElementById("adCategory").value);
-        formData.append("location", document.getElementById("adLocation").value);
-        formData.append("quantity", document.getElementById("adQuantity").value || "");
-        formData.append("unit", document.getElementById("adUnit").value);
+  const relation = profile.relation || {};
+  const connectionStatusLabel = relation.connectionStatus === "connected"
+    ? "Connected"
+    : relation.connectionStatus === "incoming_pending"
+      ? "Request received"
+      : relation.connectionStatus === "outgoing_pending"
+        ? "Request sent"
+        : "Not connected";
 
-        if (selectedAdImageFile) {
-          formData.append("image", selectedAdImageFile);
-        }
+  const connectionBadge = document.createElement("span");
+  connectionBadge.className = "profile-connection-badge";
+  connectionBadge.textContent = connectionStatusLabel;
+  profileActions.appendChild(connectionBadge);
 
-        try {
-          const response = await fetch("/api/marketplace", {
-            method: "POST",
-            body: formData,
-          });
+  // Add Reviews button for seller profiles
+  if (profile.role === 'General Vendor' || profile.role === 'Verified Vendor') {
+    const reviewBtn = document.createElement('button');
+    reviewBtn.className = 'action-btn secondary';
+    reviewBtn.textContent = 'Reviews';
+    reviewBtn.addEventListener('click', () => {
+      window.showProfilePanel('sellerReviewsPanel');
+      const list = document.getElementById('sellerReviewsList');
+      if (list) loadSellerReviews(profile.id, list);
+    });
+    profileActions.appendChild(reviewBtn);
+  }
 
-          const data = await response.json();
-          if (!response.ok) {
-            showNotice(data.message || "Failed to post product", "error");
-            return;
-          }
-
-          showNotice("Product posted successfully!", "success");
-          marketplaceForm.reset();
-          selectedAdImageFile = null;
-          if (adImagePreview) adImagePreview.style.display = "none";
-          await fetchMarketplaceAds();
-        } catch (error) {
-          console.error("Error posting product:", error);
-          showNotice("Failed to post product", "error");
-        }
+  if (relation.connectionStatus === "none") {
+    const connectBtn = document.createElement("button");
+    connectBtn.className = "action-btn";
+    connectBtn.textContent = "Connect";
+    connectBtn.addEventListener("click", async () => {
+      const response = await fetch("/api/connections/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiverId: profile.id }),
       });
-    }
 
-    function filterMarketplaceAds() {
-      if (!Array.isArray(allMarketplaceAds)) {
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to send connection request.", "error");
         return;
       }
 
-      const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
-      const selectedCategory = categorySelect ? categorySelect.value : "";
-      const selectedLocation = locationSelect ? locationSelect.value : "";
+      showNotice("Connection request sent.", "success");
+      await refreshProfile();
+    });
 
-      const filtered = allMarketplaceAds.filter((ad) => {
-        const matchesSearch =
-          !searchTerm ||
-          String(ad.productTitle || "").toLowerCase().includes(searchTerm) ||
-          String(ad.description || "").toLowerCase().includes(searchTerm);
-
-        const matchesCategory = !selectedCategory || ad.category === selectedCategory;
-        const matchesLocation = !selectedLocation || ad.location === selectedLocation;
-
-        return matchesSearch && matchesCategory && matchesLocation;
-      });
-
-      renderMarketplaceAds(filtered, marketplaceGrid);
-    }
-
-    if (searchInput) {
-      searchInput.addEventListener("input", filterMarketplaceAds);
-    }
-
-    if (categorySelect) {
-      categorySelect.addEventListener("change", filterMarketplaceAds);
-    }
-
-    if (locationSelect) {
-      locationSelect.addEventListener("change", filterMarketplaceAds);
-    }
-
-    async function fetchMarketplaceAds() {
-      try {
-        const response = await fetch("/api/marketplace");
-        if (!response.ok) {
-          throw new Error("Failed to fetch marketplace ads");
-        }
-
-        allMarketplaceAds = await response.json();
-        filterMarketplaceAds();
-      } catch (error) {
-        console.error(error);
-        marketplaceGrid.innerHTML = '<article class="market-card"><div class="market-body"><p class="market-seller">Unable to load marketplace ads.</p></div></article>';
-      }
-    }
-
-    // Initialize
-    checkSellerStatus();
-    fetchMarketplaceAds();
+    profileActions.appendChild(connectBtn);
+    return;
   }
+
+  if (relation.connectionStatus === "connected") {
+    const connected = document.createElement("span");
+    connected.className = "action-btn secondary";
+    connected.textContent = "Connected";
+    profileActions.appendChild(connected);
+    return;
+  }
+
+  if (relation.connectionStatus === "outgoing_pending") {
+    const sent = document.createElement("span");
+    sent.className = "action-btn secondary";
+    sent.textContent = "Request Sent";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "action-btn secondary";
+    cancelBtn.textContent = "Cancel Request";
+    cancelBtn.addEventListener("click", async () => {
+      const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/cancel`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to cancel request.", "error");
+        return;
+      }
+      await refreshProfile();
+    });
+
+    profileActions.appendChild(sent);
+    profileActions.appendChild(cancelBtn);
+    return;
+  }
+
+  if (relation.connectionStatus === "incoming_pending") {
+    const acceptBtn = document.createElement("button");
+    acceptBtn.className = "action-btn";
+    acceptBtn.textContent = "Accept Request";
+    acceptBtn.addEventListener("click", async () => {
+      const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "accept" }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to accept request.", "error");
+        return;
+      }
+      await refreshProfile();
+    });
+
+    const discardBtn = document.createElement("button");
+    discardBtn.className = "action-btn secondary";
+    discardBtn.textContent = "Discard";
+    discardBtn.addEventListener("click", async () => {
+      const response = await fetch(`/api/connections/requests/${relation.pendingRequestId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "discard" }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to discard request.", "error");
+        return;
+      }
+      await refreshProfile();
+    });
+
+    profileActions.appendChild(acceptBtn);
+    profileActions.appendChild(discardBtn);
+  }
+
+  if (relation.canFollow) {
+    const followBtn = document.createElement("button");
+    followBtn.className = relation.isFollowing ? "action-btn secondary" : "action-btn";
+    followBtn.textContent = relation.isFollowing ? "Unfollow Expert" : "Follow Expert";
+    followBtn.addEventListener("click", async () => {
+      const response = await fetch(`/api/follows/${profile.id}`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) {
+        showNotice(data.message || "Failed to update follow.", "error");
+        return;
+      }
+      await refreshProfile();
+    });
+    profileActions.appendChild(followBtn);
+  }
+}
 
 function renderRequestList(container, rows, withActions, onAccept, onDiscard) {
   if (!container) {
@@ -1450,6 +2106,12 @@ async function initProfilePage() {
   const grantExpertBtn = document.getElementById("grantExpertBtn");
   const grantSellerBtn = document.getElementById("grantSellerBtn");
   const removeRoleBtn = document.getElementById("removeRoleBtn");
+  const sellerReviewsPanel = document.getElementById("sellerReviewsPanel");
+  const sellerReviewsList = document.getElementById("sellerReviewsList");
+  const sellerReviewForm = document.getElementById("sellerReviewForm");
+  const sellerReviewRating = document.getElementById("sellerReviewRating");
+  const sellerReviewText = document.getElementById("sellerReviewText");
+  const submitSellerReviewBtn = document.getElementById("submitSellerReview");
 
   const me = await getCurrentUserProfile();
 
@@ -1474,6 +2136,18 @@ async function initProfilePage() {
     if (likedPostsPanel) likedPostsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (commentedPostsPanel) commentedPostsPanel.style.display = isOwnAndAuthenticated ? "block" : "none";
     if (adminToolsPanel) adminToolsPanel.style.display = canGrant ? "block" : "none";
+
+    // Seller reviews panel: only relevant for seller profiles
+    const isSellerProfile = profile.role === "General Vendor" || profile.role === "Verified Vendor";
+    if (sellerReviewsPanel) sellerReviewsPanel.style.display = isSellerProfile ? "block" : "none";
+    if (isSellerProfile && sellerReviewsList) {
+      await loadSellerReviews(viewedUserId, sellerReviewsList);
+    }
+
+    // Show review form only for authenticated viewers who are NOT the profile owner
+    if (sellerReviewForm) {
+      sellerReviewForm.style.display = isSellerProfile && authState.authenticated && authState.userId !== profile.id ? 'block' : 'none';
+    }
 
     if (isOwnAndAuthenticated) {
       await loadConnectionRequests();
@@ -1531,6 +2205,40 @@ async function initProfilePage() {
     renderOutgoingRequestList(outgoingRequests, data.outgoing, cancelOutgoingRequest);
   }
 
+  if (submitSellerReviewBtn) {
+    submitSellerReviewBtn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      // ensure auth
+      const state = await getAuthState();
+      if (!state.authenticated) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const rating = Number(sellerReviewRating ? sellerReviewRating.value : 5);
+      const comment = sellerReviewText ? sellerReviewText.value.trim() : '';
+
+      try {
+        const resp = await fetch(`/api/sellers/${viewedUserId}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating, comment }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          showNotice(data.message || 'Failed to post review', 'error');
+          return;
+        }
+        showNotice('Review posted', 'success');
+        if (sellerReviewsList) await loadSellerReviews(viewedUserId, sellerReviewsList);
+        if (sellerReviewText) sellerReviewText.value = '';
+      } catch (err) {
+        console.error(err);
+        showNotice('Failed to post review', 'error');
+      }
+    });
+  }
+
   async function loadConnections() {
     const response = await fetch("/api/connections");
     if (!response.ok) {
@@ -1558,7 +2266,7 @@ async function initProfilePage() {
             <div class="request-item-top">
               <div>
                 <p class="request-item-name"><a class="post-profile-link" href="${profileUrl}">${escapeHtml(row.fullName)}</a></p>
-                <p class="request-item-role">${escapeHtml(row.role || "User")} - ${escapeHtml(row.districtLocation || "Unknown location")}</p>
+                <p class="request-item-role">${escapeHtml(row.role || "User")} • ${escapeHtml(row.districtLocation || "Unknown location")}</p>
               </div>
             </div>
           </article>

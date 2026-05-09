@@ -3,12 +3,15 @@ const mysql = require('mysql2');
 
 // This function creates a MySQL connection pool
 function createDatabase() {
+  const useSsl = String(process.env.DB_SSL || '').trim().toLowerCase() === 'true';
+
   // Create a pool of database connections (reuses connections for efficiency)
   const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
+    ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
     waitForConnections: true,
     connectionLimit: 10, // Max 10 simultaneous connections
     queueLimit: 0,
