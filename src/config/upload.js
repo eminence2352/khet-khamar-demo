@@ -1,5 +1,6 @@
 // Import multer for handling file uploads
 const multer = require('multer');
+const path = require('path');
 
 // This function creates the multer upload handler for image files
 function createUpload() {
