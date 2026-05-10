@@ -271,6 +271,176 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
       res.status(500).json({ message: 'Failed to add comment' });
     }
   });
+
+  // ENDPOINT 6: PUT /api/posts/:postId - Edit a post (owner or admin only)
+  app.put('/api/posts/:postId', requireAuth, async (req, res) => {
+    const postId = Number.parseInt(req.params.postId, 10);
+    const userId = Number(req.session.userId);
+    const { textContent } = req.body;
+    const trimmedText = String(textContent || '').trim();
+
+    if (!Number.isInteger(postId) || postId <= 0) {
+      return res.status(400).json({ message: 'Invalid post id.' });
+    }
+
+    if (!trimmedText) {
+      return res.status(400).json({ message: 'Post text is required.' });
+    }
+
+    try {
+      // Get post owner and role
+      const [postRows] = await db.query('SELECT user_id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1', [postId]);
+      if (postRows.length === 0) {
+        return res.status(404).json({ message: 'Post not found.' });
+      }
+
+      const postOwnerId = postRows[0].user_id;
+      
+      // Get current user's role
+      const [userRows] = await db.query('SELECT role FROM users WHERE id = ? LIMIT 1', [userId]);
+      const userRole = userRows.length > 0 ? userRows[0].role : null;
+      
+      // Check if user is owner or admin
+      const isOwner = userId === postOwnerId;
+      const isAdmin = userRole === 'Admin';
+      
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'You cannot edit this post.' });
+      }
+
+      // Update the post
+      await db.query('UPDATE posts SET text_content = ? WHERE id = ?', [trimmedText, postId]);
+      res.json({ message: 'Post updated successfully.' });
+    } catch (error) {
+      console.error('Failed to edit post:', error.message);
+      res.status(500).json({ message: 'Failed to edit post' });
+    }
+  });
+
+  // ENDPOINT 7: DELETE /api/posts/:postId - Delete a post (owner or admin only)
+  app.delete('/api/posts/:postId', requireAuth, async (req, res) => {
+    const postId = Number.parseInt(req.params.postId, 10);
+    const userId = Number(req.session.userId);
+
+    if (!Number.isInteger(postId) || postId <= 0) {
+      return res.status(400).json({ message: 'Invalid post id.' });
+    }
+
+    try {
+      // Get post owner
+      const [postRows] = await db.query('SELECT user_id FROM posts WHERE id = ? AND is_active = TRUE LIMIT 1', [postId]);
+      if (postRows.length === 0) {
+        return res.status(404).json({ message: 'Post not found.' });
+      }
+
+      const postOwnerId = postRows[0].user_id;
+      
+      // Get current user's role
+      const [userRows] = await db.query('SELECT role FROM users WHERE id = ? LIMIT 1', [userId]);
+      const userRole = userRows.length > 0 ? userRows[0].role : null;
+      
+      // Check if user is owner or admin
+      const isOwner = userId === postOwnerId;
+      const isAdmin = userRole === 'Admin';
+      
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'You cannot delete this post.' });
+      }
+
+      // Soft delete - mark as inactive
+      await db.query('UPDATE posts SET is_active = FALSE WHERE id = ?', [postId]);
+      res.json({ message: 'Post deleted successfully.' });
+    } catch (error) {
+      console.error('Failed to delete post:', error.message);
+      res.status(500).json({ message: 'Failed to delete post' });
+    }
+  });
+
+  // ENDPOINT 8: PUT /api/posts/:postId/comments/:commentId - Edit a comment (owner or admin only)
+  app.put('/api/posts/:postId/comments/:commentId', requireAuth, async (req, res) => {
+    const postId = Number.parseInt(req.params.postId, 10);
+    const commentId = Number.parseInt(req.params.commentId, 10);
+    const userId = Number(req.session.userId);
+    const { textContent } = req.body;
+    const trimmedText = String(textContent || '').trim();
+
+    if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) {
+      return res.status(400).json({ message: 'Invalid post or comment id.' });
+    }
+
+    if (!trimmedText) {
+      return res.status(400).json({ message: 'Comment text is required.' });
+    }
+
+    try {
+      // Get comment owner
+      const [commentRows] = await db.query('SELECT user_id FROM comments WHERE id = ? AND post_id = ? LIMIT 1', [commentId, postId]);
+      if (commentRows.length === 0) {
+        return res.status(404).json({ message: 'Comment not found.' });
+      }
+
+      const commentOwnerId = commentRows[0].user_id;
+      
+      // Get current user's role
+      const [userRows] = await db.query('SELECT role FROM users WHERE id = ? LIMIT 1', [userId]);
+      const userRole = userRows.length > 0 ? userRows[0].role : null;
+      
+      // Check if user is owner or admin
+      const isOwner = userId === commentOwnerId;
+      const isAdmin = userRole === 'Admin';
+      
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'You cannot edit this comment.' });
+      }
+
+      // Update the comment
+      await db.query('UPDATE comments SET text_content = ? WHERE id = ?', [trimmedText, commentId]);
+      res.json({ message: 'Comment updated successfully.' });
+    } catch (error) {
+      console.error('Failed to edit comment:', error.message);
+      res.status(500).json({ message: 'Failed to edit comment' });
+    }
+  });
+
+  // ENDPOINT 9: DELETE /api/posts/:postId/comments/:commentId - Delete a comment (owner or admin only)
+  app.delete('/api/posts/:postId/comments/:commentId', requireAuth, async (req, res) => {
+    const postId = Number.parseInt(req.params.postId, 10);
+    const commentId = Number.parseInt(req.params.commentId, 10);
+    const userId = Number(req.session.userId);
+
+    if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) {
+      return res.status(400).json({ message: 'Invalid post or comment id.' });
+    }
+
+    try {
+      // Get comment owner
+      const [commentRows] = await db.query('SELECT user_id FROM comments WHERE id = ? AND post_id = ? LIMIT 1', [commentId, postId]);
+      if (commentRows.length === 0) {
+        return res.status(404).json({ message: 'Comment not found.' });
+      }
+
+      const commentOwnerId = commentRows[0].user_id;
+      
+      // Get current user's role
+      const [userRows] = await db.query('SELECT role FROM users WHERE id = ? LIMIT 1', [userId]);
+      const userRole = userRows.length > 0 ? userRows[0].role : null;
+      
+      // Check if user is owner or admin
+      const isOwner = userId === commentOwnerId;
+      const isAdmin = userRole === 'Admin';
+      
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'You cannot delete this comment.' });
+      }
+
+      // Delete the comment
+      await db.query('DELETE FROM comments WHERE id = ?', [commentId]);
+      res.json({ message: 'Comment deleted successfully.' });
+    } catch (error) {
+      console.error('Failed to delete comment:', error.message);
+      res.status(500).json({ message: 'Failed to delete comment' });
+    }
+  });
 }
 
 module.exports = registerFeedRoutes;

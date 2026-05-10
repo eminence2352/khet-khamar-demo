@@ -21,16 +21,147 @@ const dictionary = {
     login: "Login",
     signup: "Sign Up",
     logout: "Logout",
+    // Close menu dropdowns when clicking elsewhere
+    document.addEventListener("click", (event) => {
+      // Only close if clicked outside any dropdown
+      if (!event.target.closest(".post-menu-dropdown") && !event.target.closest(".post-menu-btn") &&
+          !event.target.closest(".comment-menu-dropdown") && !event.target.closest(".comment-menu-btn")) {
+        feedList.querySelectorAll(".post-menu-dropdown.show").forEach(dropdown => dropdown.classList.remove("show"));
+        feedList.querySelectorAll(".comment-menu-dropdown.show").forEach(dropdown => dropdown.classList.remove("show"));
+      }
+    });
   },
+    // Edit Modal handlers
+    const editModal = document.getElementById("editModal");
+    const editModalClose = document.getElementById("editModalClose");
+    const editModalCancel = document.getElementById("editModalCancel");
+    const editModalSave = document.getElementById("editModalSave");
+    const editModalText = document.getElementById("editModalText");
 };
+    if (editModalClose) {
+      editModalClose.addEventListener("click", () => {
+        editModal.style.display = "none";
+      });
+    }
 
+    if (editModalCancel) {
+      editModalCancel.addEventListener("click", () => {
+        editModal.style.display = "none";
+      });
+    }
 // Select all DOM elements that need translation
-const body = document.body;
-const translatableNodes = document.querySelectorAll("[data-i18n]");
-const translatablePlaceholders = document.querySelectorAll("[data-i18n-placeholder]");
+    if (editModalSave) {
+      editModalSave.addEventListener("click", async () => {
+        const mode = editModal.dataset.mode;
+        const postId = Number.parseInt(editModal.dataset.postId, 10);
+        const commentId = Number.parseInt(editModal.dataset.commentId, 10);
+        const textContent = String(editModalText.value || "").trim();
 
+        if (!textContent) {
+          showNotice("Content cannot be empty.", "error");
+          return;
+        }
+const body = document.body;
+        try {
+          if (mode === "post") {
+            if (!Number.isInteger(postId) || postId <= 0) return;
+            const response = await fetch(`/api/posts/${postId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ textContent }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+              showNotice(data.message || "Failed to update post.", "error");
+              return;
+            }
+            showNotice("Post updated successfully!", "success");
+            editModal.style.display = "none";
+            await fetchPosts({ container: feedList, targetPostId: postId });
+          } else if (mode === "comment") {
+            if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) return;
+            const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ textContent }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+              showNotice(data.message || "Failed to update comment.", "error");
+              return;
+            }
+            showNotice("Comment updated successfully!", "success");
+            editModal.style.display = "none";
+            await loadPostComments(postId, { forceRefresh: true });
+          }
+        } catch (error) {
+          console.error(error);
+          showNotice("Failed to save changes.", "error");
+        }
+      });
+    }
+const translatableNodes = document.querySelectorAll("[data-i18n]");
+    // Delete Modal handlers
+    const deleteModal = document.getElementById("deleteModal");
+    const deleteModalCancel = document.getElementById("deleteModalCancel");
+    const deleteModalConfirm = document.getElementById("deleteModalConfirm");
+const translatablePlaceholders = document.querySelectorAll("[data-i18n-placeholder]");
+    if (deleteModalCancel) {
+      deleteModalCancel.addEventListener("click", () => {
+        deleteModal.style.display = "none";
+      });
+    }
+
+    if (deleteModalConfirm) {
+      deleteModalConfirm.addEventListener("click", async () => {
+        const mode = deleteModal.dataset.mode;
+        const postId = Number.parseInt(deleteModal.dataset.postId, 10);
+        const commentId = Number.parseInt(deleteModal.dataset.commentId, 10);
 // Apply English text to all translatable elements on page load
+        try {
+          if (mode === "post") {
+            if (!Number.isInteger(postId) || postId <= 0) return;
+            const response = await fetch(`/api/posts/${postId}`, {
+              method: "DELETE",
+            });
+            const data = await response.json();
+            if (!response.ok) {
+              showNotice(data.message || "Failed to delete post.", "error");
+              return;
+            }
+            showNotice("Post deleted successfully!", "success");
+            deleteModal.style.display = "none";
+            await fetchPosts({ container: feedList });
+          } else if (mode === "comment") {
+            if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) return;
+            const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+              method: "DELETE",
+            });
+            const data = await response.json();
+            if (!response.ok) {
+              showNotice(data.message || "Failed to delete comment.", "error");
+              return;
+            }
+            showNotice("Comment deleted successfully!", "success");
+            deleteModal.style.display = "none";
+            await loadPostComments(postId, { forceRefresh: true });
+          }
+        } catch (error) {
+          console.error(error);
+          showNotice("Failed to delete item.", "error");
+        }
+      });
+    }
 function applyEnglishLanguage() {
+    // Close modals when clicking outside them
+    window.addEventListener("click", (event) => {
+      if (event.target === editModal) {
+        editModal.style.display = "none";
+      }
+      if (event.target === deleteModal) {
+        deleteModal.style.display = "none";
+      }
+    });
   body.dataset.lang = "en";
 
   translatableNodes.forEach((node) => {
@@ -39,11 +170,152 @@ function applyEnglishLanguage() {
     if (translatedValue) {
       node.textContent = translatedValue;
     }
+      // Post menu button clicks
+      const postMenuBtn = event.target.closest(".js-post-menu-btn");
+      if (postMenuBtn) {
+        const postId = Number.parseInt(postMenuBtn.dataset.postId, 10);
+        if (!Number.isInteger(postId) || postId <= 0) return;
+      
+        const dropdown = feedList.querySelector(`.js-post-menu-dropdown[data-post-id="${postId}"]`);
+        if (!dropdown) return;
+      
+        // Toggle dropdown visibility
+        dropdown.classList.toggle("show");
+        event.stopPropagation();
+        return;
+      }
   });
+      // Close post menu dropdown if clicking outside
+      const postEditBtn = event.target.closest(".js-edit-post");
+      if (postEditBtn) {
+        const postId = Number.parseInt(postEditBtn.dataset.postId, 10);
+        if (!Number.isInteger(postId) || postId <= 0) return;
+      
+        const postCard = feedList.querySelector(`#post-${postId}`);
+        if (!postCard) return;
+      
+        const postContent = postCard.querySelector(".post-text");
+        if (!postContent) return;
+      
+        const editModal = document.getElementById("editModal");
+        const editModalTitle = document.getElementById("editModalTitle");
+        const editModalText = document.getElementById("editModalText");
+        if (!editModal || !editModalText) return;
+      
+        editModalTitle.textContent = "Edit Post";
+        editModalText.value = postContent.textContent;
+        editModal.dataset.mode = "post";
+        editModal.dataset.postId = postId;
+        editModal.style.display = "flex";
+      
+        // Close the dropdown
+        const dropdown = feedList.querySelector(`.js-post-menu-dropdown[data-post-id="${postId}"]`);
+        if (dropdown) dropdown.classList.remove("show");
+      
+        event.stopPropagation();
+        return;
+      }
 
+      // Post delete button
+      const postDeleteBtn = event.target.closest(".js-delete-post");
+      if (postDeleteBtn) {
+        const postId = Number.parseInt(postDeleteBtn.dataset.postId, 10);
+        if (!Number.isInteger(postId) || postId <= 0) return;
+      
+        const deleteModal = document.getElementById("deleteModal");
+        const deleteModalTitle = document.getElementById("deleteModalTitle");
+        const deleteModalMessage = document.getElementById("deleteModalMessage");
+        if (!deleteModal) return;
+      
+        deleteModalTitle.textContent = "Delete Post";
+        deleteModalMessage.textContent = "Are you sure you want to delete this post? This action cannot be undone.";
+        deleteModal.dataset.mode = "post";
+        deleteModal.dataset.postId = postId;
+        deleteModal.style.display = "flex";
+      
+        // Close the dropdown
+        const dropdown = feedList.querySelector(`.js-post-menu-dropdown[data-post-id="${postId}"]`);
+        if (dropdown) dropdown.classList.remove("show");
+      
+        event.stopPropagation();
+        return;
+      }
   translatablePlaceholders.forEach((node) => {
+      // Comment menu button clicks
+      const commentMenuBtn = event.target.closest(".js-comment-menu-btn");
+      if (commentMenuBtn) {
+        const postId = Number.parseInt(commentMenuBtn.dataset.postId, 10);
+        const commentId = Number.parseInt(commentMenuBtn.dataset.commentId, 10);
+        if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) return;
+      
+        const dropdown = feedList.querySelector(`.js-comment-menu-dropdown[data-post-id="${postId}"][data-comment-id="${commentId}"]`);
+        if (!dropdown) return;
+      
+        // Toggle dropdown visibility
+        dropdown.classList.toggle("show");
+        event.stopPropagation();
+        return;
+      }
     const key = node.dataset.i18nPlaceholder;
+      // Comment edit button
+      const commentEditBtn = event.target.closest(".js-edit-comment");
+      if (commentEditBtn) {
+        const postId = Number.parseInt(commentEditBtn.dataset.postId, 10);
+        const commentId = Number.parseInt(commentEditBtn.dataset.commentId, 10);
+        if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) return;
+      
+        const commentItem = feedList.querySelector(`.post-comment-item:has(.js-edit-comment[data-comment-id="${commentId}"])`);
+        if (!commentItem) return;
+      
+        const commentText = commentItem.querySelector(".post-comment-text");
+        if (!commentText) return;
+      
+        const editModal = document.getElementById("editModal");
+        const editModalTitle = document.getElementById("editModalTitle");
+        const editModalText = document.getElementById("editModalText");
+        if (!editModal || !editModalText) return;
+      
+        editModalTitle.textContent = "Edit Comment";
+        editModalText.value = commentText.textContent;
+        editModal.dataset.mode = "comment";
+        editModal.dataset.postId = postId;
+        editModal.dataset.commentId = commentId;
+        editModal.style.display = "flex";
+      
+        // Close the dropdown
+        const dropdown = feedList.querySelector(`.js-comment-menu-dropdown[data-post-id="${postId}"][data-comment-id="${commentId}"]`);
+        if (dropdown) dropdown.classList.remove("show");
+      
+        event.stopPropagation();
+        return;
+      }
     const translatedValue = dictionary.en[key];
+      // Comment delete button
+      const commentDeleteBtn = event.target.closest(".js-delete-comment");
+      if (commentDeleteBtn) {
+        const postId = Number.parseInt(commentDeleteBtn.dataset.postId, 10);
+        const commentId = Number.parseInt(commentDeleteBtn.dataset.commentId, 10);
+        if (!Number.isInteger(postId) || postId <= 0 || !Number.isInteger(commentId) || commentId <= 0) return;
+      
+        const deleteModal = document.getElementById("deleteModal");
+        const deleteModalTitle = document.getElementById("deleteModalTitle");
+        const deleteModalMessage = document.getElementById("deleteModalMessage");
+        if (!deleteModal) return;
+      
+        deleteModalTitle.textContent = "Delete Comment";
+        deleteModalMessage.textContent = "Are you sure you want to delete this comment? This action cannot be undone.";
+        deleteModal.dataset.mode = "comment";
+        deleteModal.dataset.postId = postId;
+        deleteModal.dataset.commentId = commentId;
+        deleteModal.style.display = "flex";
+      
+        // Close the dropdown
+        const dropdown = feedList.querySelector(`.js-comment-menu-dropdown[data-post-id="${postId}"][data-comment-id="${commentId}"]`);
+        if (dropdown) dropdown.classList.remove("show");
+      
+        event.stopPropagation();
+        return;
+      }
     if (translatedValue) {
       node.setAttribute("placeholder", translatedValue);
     }
@@ -345,6 +617,18 @@ function renderPosts(posts, container) {
       }
 
       const safePostId = Number(post.id) || 0;
+      const isOwnPost = currentUserProfile && currentUserProfile.userId === post.userId;
+      const menuBtn = isOwnPost ? `
+        <div style="position: relative;">
+          <button type="button" class="post-menu-btn js-post-menu-btn" data-post-id="${safePostId}" title="Post options" aria-label="Post options">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="post-menu-dropdown js-post-menu-dropdown" data-post-id="${safePostId}">
+            <button type="button" class="post-menu-item js-edit-post" data-post-id="${safePostId}"><i class="fa-solid fa-pencil"></i> Edit</button>
+            <button type="button" class="post-menu-item delete js-delete-post" data-post-id="${safePostId}"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      ` : '';
 
       return `
       <article class="post-card" id="post-${safePostId}" data-post-id="${safePostId}">
@@ -356,6 +640,7 @@ function renderPosts(posts, container) {
             <h2 class="post-user"><a class="post-profile-link" href="${profileUrl}">${userName}</a></h2>
             <p class="post-time">${createdText} ${roleTag}</p>
           </div>
+          ${menuBtn}
         </header>
         ${postBody}
         <footer class="post-actions" aria-label="Post actions">
@@ -416,7 +701,7 @@ async function fetchPosts({ userId = null, container = null, targetPostId = null
   }
 }
 
-function renderComments(comments, listContainer) {
+function renderComments(comments, listContainer, postId = null) {
   if (!listContainer) {
     return;
   }
@@ -432,12 +717,29 @@ function renderComments(comments, listContainer) {
       const commenterInitials = escapeHtml(getAvatarInitials(commenterName));
       const commentText = escapeHtml(comment.textContent || "");
       const createdText = formatRelativeTime(comment.createdAt);
+      const commentId = Number(comment.id) || 0;
+      const isOwnComment = currentUserProfile && currentUserProfile.userId === comment.userId;
+      
+      const menuBtn = isOwnComment ? `
+        <div style="position: relative;">
+          <button type="button" class="comment-menu-btn js-comment-menu-btn" data-post-id="${postId}" data-comment-id="${commentId}" title="Comment options" aria-label="Comment options">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="comment-menu-dropdown js-comment-menu-dropdown" data-post-id="${postId}" data-comment-id="${commentId}">
+            <button type="button" class="comment-menu-item js-edit-comment" data-post-id="${postId}" data-comment-id="${commentId}"><i class="fa-solid fa-pencil"></i> Edit</button>
+            <button type="button" class="comment-menu-item delete js-delete-comment" data-post-id="${postId}" data-comment-id="${commentId}"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      ` : '';
 
       return `
         <article class="post-comment-item">
           <div class="post-comment-avatar">${commenterInitials}</div>
           <div class="post-comment-body">
-            <p class="post-comment-meta"><strong>${commenterName}</strong> • ${createdText}</p>
+            <div class="comment-meta-wrapper">
+              <p class="post-comment-meta"><strong>${commenterName}</strong> • ${createdText}</p>
+              ${menuBtn}
+            </div>
             <p class="post-comment-text">${commentText}</p>
           </div>
         </article>
@@ -873,7 +1175,7 @@ function initFeedPage() {
         throw new Error(data.message || "Failed to load comments.");
       }
 
-      renderComments(data, commentsList);
+      renderComments(data, commentsList, postId);
       commentsList.dataset.loaded = "true";
       updateCommentCountText(feedList, postId, Array.isArray(data) ? data.length : 0);
       return Array.isArray(data) ? data : [];
