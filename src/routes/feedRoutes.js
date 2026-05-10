@@ -1,5 +1,6 @@
 // This file registers all feed-related API endpoints (posts, likes, comments)
 const { createNotification } = require('../helpers/notifications');
+const { uploadBufferToCloudinary } = require('../helpers/media');
 
 function registerFeedRoutes(app, { db, upload, requireAuth }) {
   // ENDPOINT 1: GET /api/posts - Fetch feed posts for current user
@@ -65,15 +66,15 @@ function registerFeedRoutes(app, { db, upload, requireAuth }) {
     const { textContent, isHelpRequest } = req.body;
     const trimmedText = String(textContent || '').trim();
     const helpRequested = ['true', '1', 'yes', 'on'].includes(String(isHelpRequest || '').trim().toLowerCase());
-    // Store the uploaded image path if one was provided
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-
-    // A post must have either text OR an image (or both)
-    if (!trimmedText && !imagePath) {
-      return res.status(400).json({ message: 'textContent or image is required' });
-    }
-
     try {
+      // Store the uploaded image path if one was provided
+      const imagePath = req.file ? await uploadBufferToCloudinary(req.file, 'khet-khamar/posts') : null;
+
+      // A post must have either text OR an image (or both)
+      if (!trimmedText && !imagePath) {
+        return res.status(400).json({ message: 'textContent or image is required' });
+      }
+
       // Insert the new post into the database
       const [result] = await db.query(
         'INSERT INTO posts (user_id, text_content, image_path) VALUES (?, ?, ?)',

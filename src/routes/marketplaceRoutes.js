@@ -1,5 +1,6 @@
 function registerMarketplaceRoutes(app, { db, upload, requireAuth }) {
   const { createNotification } = require('../helpers/notifications');
+  const { uploadBufferToCloudinary } = require('../helpers/media');
 
   // ENDPOINT 1: GET /api/marketplace - Fetch marketplace ads with filtering
   app.get('/api/marketplace', async (req, res) => {
@@ -93,7 +94,7 @@ function registerMarketplaceRoutes(app, { db, upload, requireAuth }) {
       }
 
       // Get uploaded image path if one was provided
-      const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+      const imagePath = req.file ? await uploadBufferToCloudinary(req.file, 'khet-khamar/marketplace') : null;
 
       // Insert the new marketplace ad
       const [result] = await db.query(
@@ -163,7 +164,9 @@ function registerMarketplaceRoutes(app, { db, upload, requireAuth }) {
         isActive,
       } = req.body;
 
-      const imagePath = req.file ? `/uploads/${req.file.filename}` : ad.image_path || null;
+      const imagePath = req.file
+        ? await uploadBufferToCloudinary(req.file, 'khet-khamar/marketplace')
+        : ad.image_path || null;
 
       // Build update query dynamically
       const updates = [];
