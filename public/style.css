@@ -3179,3 +3179,108 @@ body::after {
   border-color: rgba(67, 56, 202, 0.6) !important;
   box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.2) !important;
 }
+
+/* ============================================
+   MOBILE HARDENING PATCH
+   ============================================ */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --app-header-height: 9rem;
+  }
+
+  .top-header {
+    width: calc(100% - 0.8rem) !important;
+    border-radius: 0 0 0.85rem 0.85rem;
+    padding: 0.55rem 0.3rem;
+  }
+
+  .main-content {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .create-post-actions {
+    flex-wrap: wrap;
+  }
+
+  .camera-upload,
+  .post-btn,
+  .help-request-checkbox {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .post-btn {
+    margin-left: 0;
+  }
+
+  .post-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .post-comment-actions {
+    flex-direction: column;
+  }
+
+  .post-comment-actions button {
+    width: 100%;
+  }
+
+  .notification-panel {
+    right: 0;
+    width: min(92vw, 340px) !important;
+    max-height: min(70vh, 500px);
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-actions,
+  .request-actions,
+  .admin-actions,
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .profile-actions .action-btn,
+  .request-actions .action-btn,
+  .admin-actions .action-btn,
+  .form-actions .submit-btn,
+  .form-actions .cancel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .top-nav .nav-item {
+    font-size: 0.66rem;
+  }
+
+  .top-nav .nav-item i {
+    font-size: 0.98rem;
+  }
+
+  .notification-panel {
+    width: min(94vw, 320px) !important;
+  }
+
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+}
