@@ -1074,6 +1074,8 @@ body {
     align-items: start;
     justify-content: center;
     gap: 1rem;
+    padding-left: calc(300px + 1rem);
+    padding-right: calc(300px + 1rem);
   }
 
   .home-center-column {
@@ -1083,8 +1085,19 @@ body {
 
   .home-left-rail,
   .home-right-rail {
-    position: sticky;
+    position: fixed;
     top: calc(var(--app-header-height) + 1rem);
+    width: 300px;
+    max-height: calc(100vh - var(--app-header-height) - 1.6rem);
+    overflow: auto;
+  }
+
+  .home-left-rail {
+    left: calc(50% - 690px - 1rem);
+  }
+
+  .home-right-rail {
+    right: calc(50% - 690px - 1rem);
   }
 }
 

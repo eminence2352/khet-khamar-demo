@@ -345,7 +345,7 @@ function renderPosts(posts, container) {
       }
 
       const safePostId = Number(post.id) || 0;
-      const isOwnPost = currentUserProfile && currentUserProfile.userId === post.userId;
+      const isOwnPost = currentUserProfile && currentUserProfile.id === post.userId;
       const menuBtn = isOwnPost ? `
         <div style="position: relative;">
           <button type="button" class="post-menu-btn js-post-menu-btn" data-post-id="${safePostId}" title="Post options" aria-label="Post options">
@@ -446,7 +446,7 @@ function renderComments(comments, listContainer, postId = null) {
       const commentText = escapeHtml(comment.textContent || "");
       const createdText = formatRelativeTime(comment.createdAt);
       const commentId = Number(comment.id) || 0;
-      const isOwnComment = currentUserProfile && currentUserProfile.userId === comment.userId;
+      const isOwnComment = currentUserProfile && currentUserProfile.id === comment.userId;
       
       const menuBtn = isOwnComment ? `
         <div style="position: relative;">
@@ -1223,13 +1223,30 @@ function initFeedPage() {
       formData.append("image", selectedImageFile);
     }
 
-    const response = await fetch("/api/posts", {
-      method: "POST",
-      body: formData,
-    });
+    let response;
+    try {
+      response = await fetch("/api/posts", {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      console.error(error);
+      showNotice("Network error while publishing. Please try again.", "error");
+      return false;
+    }
 
     if (!response.ok) {
-      throw new Error("Failed to create post");
+      let serverMessage = "Could not publish post.";
+      try {
+        const data = await response.json();
+        if (data && data.message) {
+          serverMessage = data.message;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      showNotice(serverMessage, "error");
+      return false;
     }
 
     if (postTextInput) {
