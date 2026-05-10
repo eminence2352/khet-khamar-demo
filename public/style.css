@@ -1069,18 +1069,16 @@ body {
 
 @media (min-width: 1024px) {
   .home-layout {
-    grid-template-areas: "left center right";
-    grid-template-columns: 300px minmax(0, 780px) 300px;
+    grid-template-areas: "center";
+    grid-template-columns: minmax(0, 780px);
     align-items: start;
     justify-content: center;
     gap: 1rem;
-    padding-left: calc(300px + 1rem);
-    padding-right: calc(300px + 1rem);
   }
 
   .home-center-column {
-    margin: 0;
-    max-width: none;
+    margin: 0 auto;
+    max-width: 780px;
   }
 
   .home-left-rail,
@@ -1093,11 +1091,11 @@ body {
   }
 
   .home-left-rail {
-    left: calc(50% - 690px - 1rem);
+    left: calc(50% - 390px - 300px - 1rem);
   }
 
   .home-right-rail {
-    right: calc(50% - 690px - 1rem);
+    right: calc(50% - 390px - 300px - 1rem);
   }
 }
 
