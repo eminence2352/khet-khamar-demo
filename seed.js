@@ -32,11 +32,17 @@ async function upsertUser(connection, user) {
 }
 
 async function seed() {
+  const useSsl = String(process.env.DB_SSL || '').trim().toLowerCase() === 'true';
+  const parsedPort = Number.parseInt(process.env.DB_PORT || '', 10);
+  const dbPort = Number.isFinite(parsedPort) ? parsedPort : 3306;
+
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST,
+    port: dbPort,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
+    ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
   });
 
   try {

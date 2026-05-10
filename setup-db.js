@@ -3,10 +3,16 @@ const fs = require('fs');
 const mysql = require('mysql2/promise');
 
 async function setupDatabase() {
+  const useSsl = String(process.env.DB_SSL || '').trim().toLowerCase() === 'true';
+  const parsedPort = Number.parseInt(process.env.DB_PORT || '', 10);
+  const dbPort = Number.isFinite(parsedPort) ? parsedPort : 3306;
+
   const conn = await mysql.createConnection({
     host: process.env.DB_HOST,
+    port: dbPort,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
+    ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
   });
 
   try {
