@@ -4,10 +4,13 @@ const mysql = require('mysql2');
 // This function creates a MySQL connection pool
 function createDatabase() {
   const useSsl = String(process.env.DB_SSL || '').trim().toLowerCase() === 'true';
+  const parsedPort = Number.parseInt(process.env.DB_PORT || '', 10);
+  const dbPort = Number.isFinite(parsedPort) ? parsedPort : 3306;
 
   // Create a pool of database connections (reuses connections for efficiency)
   const pool = mysql.createPool({
     host: process.env.DB_HOST,
+    port: dbPort,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
