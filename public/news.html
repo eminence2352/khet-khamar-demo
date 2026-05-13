@@ -73,6 +73,36 @@
       font-weight: 600;
     }
 
+    .weather-location-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+    }
+
+    .weather-location-btn {
+      border: 1px solid var(--primary-light);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--primary-dark);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .weather-location-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .weather-location-btn.active {
+      background: linear-gradient(145deg, var(--primary-dark), var(--primary-base));
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+
     .news-content {
       display: none;
     }
@@ -492,6 +522,7 @@
           <option value="Chattogram">Chattogram</option>
         </select>
       </div>
+      <div id="weatherLocationBar" class="weather-location-bar" aria-label="Weather locations"></div>
       <div class="weather-container" id="weatherContainer">
         <div class="loading-spinner">
           <div class="spinner"></div>
@@ -518,6 +549,7 @@
     // ============================================
     const tabs = document.querySelectorAll('.news-tab');
     const contents = document.querySelectorAll('.news-content');
+    const weatherLocations = ['Dhaka', 'Gazipur', 'Bogura', 'Rajshahi', 'Khulna', 'Chattogram'];
 
     // Keep tab state and lazy-load the requested section.
     tabs.forEach(tab => {
@@ -552,7 +584,39 @@
     const areaSelect = document.getElementById('weatherAreaSelect');
     if (areaSelect) {
       areaSelect.addEventListener('change', () => {
+        setActiveWeatherLocation(areaSelect.value);
         loadWeather();
+      });
+    }
+
+    function setActiveWeatherLocation(area) {
+      const currentArea = String(area || '').trim();
+      document.querySelectorAll('.weather-location-btn').forEach((button) => {
+        button.classList.toggle('active', button.dataset.area === currentArea);
+      });
+    }
+
+    function renderWeatherLocationButtons() {
+      const container = document.getElementById('weatherLocationBar');
+      if (!container) {
+        return;
+      }
+
+      container.innerHTML = weatherLocations
+        .map((area, index) => `
+          <button type="button" class="weather-location-btn${index === 0 ? ' active' : ''}" data-area="${area}">${area}</button>
+        `)
+        .join('');
+
+      container.querySelectorAll('.weather-location-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const area = button.dataset.area || 'Dhaka';
+          if (areaSelect) {
+            areaSelect.value = area;
+          }
+          setActiveWeatherLocation(area);
+          loadWeather();
+        });
       });
     }
 
@@ -674,6 +738,8 @@
         container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-cloud-exclamation"></i><p>Failed to load weather</p></div>';
       }
     }
+
+    renderWeatherLocationButtons();
 
     // Render agricultural news cards.
     async function loadNews() {
