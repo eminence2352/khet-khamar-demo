@@ -269,7 +269,7 @@ body {
 }
 
 .rail-head a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .rail-list {
@@ -310,7 +310,7 @@ body {
 }
 
 .rail-item-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .rail-empty {
@@ -1472,7 +1472,7 @@ body {
 }
 
 .guest-mode-banner a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 /* ============================================ */
@@ -1509,7 +1509,7 @@ body {
 
 .see-all:hover {
   color: #7fa56f;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .news-list {
@@ -1592,7 +1592,7 @@ body {
 }
 
 .post-profile-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .post-news-share {
@@ -1788,7 +1788,7 @@ body {
 }
 
 .request-item a.post-profile-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .request-item .request-item-role {
@@ -2651,7 +2651,7 @@ body {
 }
 
 .post-profile-link:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .verified-badge {
