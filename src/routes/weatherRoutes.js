@@ -24,7 +24,18 @@ function registerWeatherRoutes(app) {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${selectedLocation.lat}&longitude=${selectedLocation.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&forecast_days=${forecastDays}&timezone=Asia/Dhaka`;
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Weather upstream responded with ${response.status}`);
+      }
       const json = await response.json();
+
+      const daily = json.daily || {};
+      const hasForecastData = Array.isArray(daily.time) && daily.time.length > 0 && Array.isArray(daily.temperature_2m_max) && Array.isArray(daily.temperature_2m_min);
+      const hasCurrentData = Boolean(json.current);
+
+      if (!hasForecastData || !hasCurrentData) {
+        throw new Error('Weather upstream returned incomplete data');
+      }
 
       const conditions = {
         0: 'Clear',
@@ -47,7 +58,6 @@ function registerWeatherRoutes(app) {
         99: 'Thunderstorm with Hail',
       };
 
-      const daily = json.daily || {};
       const forecast = (daily.time || []).map((date, index) => ({
         date,
         maxTemp: Math.round(daily.temperature_2m_max[index]),

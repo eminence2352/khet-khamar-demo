@@ -25,6 +25,13 @@ body {
     linear-gradient(180deg, #ffffff 0%, #f6f6f6 45%, #eeeeee 100%);
 }
 
+a,
+a:hover,
+a:focus,
+a:visited {
+  text-decoration: none;
+}
+
 .app-notice-host {
   position: fixed;
   top: 0.9rem;

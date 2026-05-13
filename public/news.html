@@ -541,6 +541,13 @@
       });
     });
 
+    const activeTab = document.querySelector('.news-tab.active');
+    if (activeTab && activeTab.dataset.tab === 'weather') {
+      loadWeather();
+    } else if (activeTab && activeTab.dataset.tab === 'news') {
+      loadNews();
+    }
+
     // Wire up area selector to reload weather on change.
     const areaSelect = document.getElementById('weatherAreaSelect');
     if (areaSelect) {
@@ -662,13 +669,13 @@
             });
             const featuredClass = news.isFeatured ? 'news-featured' : '';
             const sourceContent = news.url
-              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; font-weight: 700;">${news.source}</a>`
+              ? `<a class="news-inline-link" href="${news.url}" target="_blank" rel="noopener noreferrer">${news.source}</a>`
               : `<span class="news-source">${news.source}</span>`;
             const titleContent = news.url
-              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">${news.title}</a>`
+              ? `<a class="news-inline-link" href="${news.url}" target="_blank" rel="noopener noreferrer">${news.title}</a>`
               : `${news.title}`;
             const readLink = news.url
-              ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="font-weight: 700; color: #84b179; text-decoration: none;">Read Original</a>`
+              ? `<a class="news-inline-link news-inline-read" href="${news.url}" target="_blank" rel="noopener noreferrer">Read Original</a>`
               : '';
             return `
               <article class="news-card ${featuredClass}">
