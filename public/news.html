@@ -54,9 +54,10 @@
     .weather-location-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       margin: 6px 0 14px;
       padding: 0 2px;
+      flex-wrap: wrap;
     }
 
     .weather-location-label {
@@ -66,7 +67,13 @@
       letter-spacing: 0.01em;
     }
 
-    .weather-location-trigger {
+    .weather-location-current {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 0.95rem;
+    }
+
+    .weather-location-btn-select {
       border: 1px solid var(--primary-dark);
       background: linear-gradient(145deg, var(--primary-dark), var(--primary-base));
       color: #ffffff;
@@ -76,18 +83,11 @@
       font-weight: 700;
       cursor: pointer;
       transition: box-shadow 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
       white-space: nowrap;
     }
 
-    .weather-location-trigger:hover {
+    .weather-location-btn-select:hover {
       box-shadow: 0 4px 12px rgba(47, 160, 132, 0.2);
-    }
-
-    .weather-location-trigger i {
-      font-size: 0.9rem;
     }
 
     .weather-location-modal {
@@ -571,12 +571,11 @@
     <!-- Weather Tab -->
     <div id="weather" class="news-content active">
       <div class="weather-location-row" aria-label="Weather locations">
-        <span class="weather-location-label">Location</span>
+        <span class="weather-location-label">Location:</span>
+        <span class="weather-location-current" id="currentWeatherArea">Dhaka</span>
         <div style="position: relative;">
-          <button class="weather-location-trigger" id="weatherLocationTrigger">
-            <i class="fa-solid fa-location-dot"></i>
-            <span id="currentWeatherArea">Dhaka</span>
-            <i class="fa-solid fa-chevron-down"></i>
+          <button class="weather-location-btn-select" id="weatherLocationTrigger">
+            Select Location
           </button>
           <div class="weather-location-modal" id="weatherLocationModal">
             <div class="weather-location-dropdown" id="weatherLocationDropdown"></div>
