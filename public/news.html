@@ -51,50 +51,42 @@
       border-bottom-color: var(--primary-dark);
     }
 
-    .weather-controls {
+    .weather-location-row {
       display: flex;
-      gap: 12px;
       align-items: center;
+      gap: 10px;
       flex-wrap: wrap;
       margin: 6px 0 14px;
+      padding: 0 2px;
     }
 
-    .weather-controls label {
-      font-weight: 700;
+    .weather-location-label {
+      font-size: 0.9rem;
+      font-weight: 800;
       color: var(--text-dark);
-    }
-
-    .weather-controls select {
-      border: 1px solid var(--primary-base);
-      background: var(--bg-light);
-      color: var(--text-dark);
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-weight: 600;
+      letter-spacing: 0.01em;
     }
 
     .weather-location-bar {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      margin: 0 0 14px;
     }
 
     .weather-location-btn {
-      border: 1px solid var(--primary-light);
-      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(47, 160, 132, 0.3);
+      background: rgba(255, 255, 255, 0.9);
       color: var(--primary-dark);
-      padding: 8px 12px;
+      padding: 7px 12px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
 
     .weather-location-btn:hover {
-      transform: translateY(-1px);
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(47, 160, 132, 0.08);
     }
 
     .weather-location-btn.active {
@@ -511,18 +503,10 @@
 
     <!-- Weather Tab -->
     <div id="weather" class="news-content active">
-      <div class="weather-controls">
-        <label for="weatherAreaSelect">Area</label>
-        <select id="weatherAreaSelect" aria-label="Select area for weather forecast">
-          <option value="Dhaka">Dhaka</option>
-          <option value="Gazipur">Gazipur</option>
-          <option value="Bogura">Bogura</option>
-          <option value="Rajshahi">Rajshahi</option>
-          <option value="Khulna">Khulna</option>
-          <option value="Chattogram">Chattogram</option>
-        </select>
+      <div class="weather-location-row" aria-label="Weather locations">
+        <span class="weather-location-label">Location</span>
+        <div id="weatherLocationBar" class="weather-location-bar"></div>
       </div>
-      <div id="weatherLocationBar" class="weather-location-bar" aria-label="Weather locations"></div>
       <div class="weather-container" id="weatherContainer">
         <div class="loading-spinner">
           <div class="spinner"></div>
@@ -550,6 +534,7 @@
     const tabs = document.querySelectorAll('.news-tab');
     const contents = document.querySelectorAll('.news-content');
     const weatherLocations = ['Dhaka', 'Gazipur', 'Bogura', 'Rajshahi', 'Khulna', 'Chattogram'];
+    let currentWeatherArea = 'Dhaka';
 
     // Keep tab state and lazy-load the requested section.
     tabs.forEach(tab => {
@@ -580,15 +565,6 @@
       loadNews();
     }
 
-    // Wire up area selector to reload weather on change.
-    const areaSelect = document.getElementById('weatherAreaSelect');
-    if (areaSelect) {
-      areaSelect.addEventListener('change', () => {
-        setActiveWeatherLocation(areaSelect.value);
-        loadWeather();
-      });
-    }
-
     function setActiveWeatherLocation(area) {
       const currentArea = String(area || '').trim();
       document.querySelectorAll('.weather-location-btn').forEach((button) => {
@@ -604,16 +580,14 @@
 
       container.innerHTML = weatherLocations
         .map((area, index) => `
-          <button type="button" class="weather-location-btn${index === 0 ? ' active' : ''}" data-area="${area}">${area}</button>
+          <button type="button" class="weather-location-btn${area === currentWeatherArea || (index === 0 && !currentWeatherArea) ? ' active' : ''}" data-area="${area}">${area}</button>
         `)
         .join('');
 
       container.querySelectorAll('.weather-location-btn').forEach((button) => {
         button.addEventListener('click', () => {
           const area = button.dataset.area || 'Dhaka';
-          if (areaSelect) {
-            areaSelect.value = area;
-          }
+          currentWeatherArea = area;
           setActiveWeatherLocation(area);
           loadWeather();
         });
@@ -621,10 +595,12 @@
     }
 
     // Render weather widget using live API data.
-    async function loadWeather() {
+    async function loadWeather(area = currentWeatherArea) {
       const container = document.getElementById('weatherContainer');
-      const areaSelect = document.getElementById('weatherAreaSelect');
-      const selectedArea = areaSelect ? areaSelect.value : 'Dhaka';
+      const selectedArea = String(area || 'Dhaka').trim() || 'Dhaka';
+      currentWeatherArea = selectedArea;
+
+      setActiveWeatherLocation(selectedArea);
 
       function buildFallbackWeather(areaName) {
         const today = new Date();
