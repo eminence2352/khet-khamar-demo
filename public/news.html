@@ -67,76 +67,75 @@
       letter-spacing: 0.01em;
     }
 
-    .weather-location-current {
-      font-weight: 700;
-      color: var(--primary-dark);
-      font-size: 0.95rem;
+    .weather-location-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0 16px;
+      padding: 0;
+    }
+
+    .weather-location-selector {
+      position: relative;
+      display: inline-block;
     }
 
     .weather-location-btn-select {
-      border: 1px solid var(--primary-dark);
       background: linear-gradient(145deg, var(--primary-dark), var(--primary-base));
       color: #ffffff;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.9rem;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      transition: box-shadow 0.2s ease;
-      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .weather-location-btn-select:hover {
-      box-shadow: 0 4px 12px rgba(47, 160, 132, 0.2);
+      box-shadow: 0 6px 16px rgba(47, 160, 132, 0.3);
+      transform: translateY(-2px);
     }
 
     .weather-location-modal {
-      position: fixed;
-      top: 0;
+      position: absolute;
+      top: 100%;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
-      display: none;
-      z-index: 1000;
-      animation: fadeIn 0.15s ease;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      z-index: 1001;
+      min-width: 180px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease;
+      margin-top: 4px;
     }
 
     .weather-location-modal.active {
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
-      padding-top: 120px;
+      max-height: 400px;
     }
 
     .weather-location-dropdown {
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-      position: absolute;
-      top: 60px;
-      left: 0;
-      min-width: 200px;
-      max-height: 300px;
-      overflow-y: auto;
-      z-index: 1001;
+      padding: 8px 0;
     }
 
     .weather-location-item {
+      display: block;
+      width: 100%;
       padding: 12px 16px;
-      border-bottom: 1px solid #f0f0f0;
+      border: none;
+      background: none;
+      text-align: left;
       cursor: pointer;
-      color: var(--text-dark);
-      font-weight: 500;
       font-size: 0.9rem;
+      color: var(--text-dark);
       transition: background 0.1s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .weather-location-item:last-child {
-      border-bottom: none;
+      font-weight: 500;
     }
 
     .weather-location-item:hover {
@@ -147,19 +146,6 @@
       background: rgba(47, 160, 132, 0.15);
       color: var(--primary-dark);
       font-weight: 700;
-    }
-
-    .weather-location-item.active i {
-      color: var(--primary-dark);
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
     }
 
     .news-content {
@@ -570,12 +556,12 @@
 
     <!-- Weather Tab -->
     <div id="weather" class="news-content active">
-      <div class="weather-location-row" aria-label="Weather locations">
-        <span class="weather-location-label">Location:</span>
-        <span class="weather-location-current" id="currentWeatherArea">Dhaka</span>
-        <div style="position: relative;">
+      <div class="weather-location-row">
+        <div class="weather-location-selector">
           <button class="weather-location-btn-select" id="weatherLocationTrigger">
-            Select Location
+            <i class="fa-solid fa-location-dot"></i>
+            <span id="currentWeatherArea">Dhaka</span>
+            <i class="fa-solid fa-chevron-down"></i>
           </button>
           <div class="weather-location-modal" id="weatherLocationModal">
             <div class="weather-location-dropdown" id="weatherLocationDropdown"></div>
@@ -642,25 +628,28 @@
 
     function setActiveWeatherLocation(area) {
       const currentArea = String(area || '').trim();
+      document.getElementById('currentWeatherArea').textContent = currentArea;
       document.querySelectorAll('.weather-location-item').forEach((item) => {
         item.classList.toggle('active', item.dataset.area === currentArea);
       });
-      document.getElementById('currentWeatherArea').textContent = currentArea;
     }
 
     function renderWeatherLocationDropdown() {
       const dropdown = document.getElementById('weatherLocationDropdown');
-      if (!dropdown) {
-        return;
-      }
+      if (!dropdown) return;
 
       dropdown.innerHTML = weatherLocations
-        .map((area) => `
-          <div class="weather-location-item${area === currentWeatherArea ? ' active' : ''}" data-area="${area}">
-            <i class="fa-solid fa-map-pin"></i>
+        .map(
+          (area) => `
+          <button 
+            type="button" 
+            class="weather-location-item${area === currentWeatherArea ? ' active' : ''}" 
+            data-area="${area}"
+          >
             ${area}
-          </div>
-        `)
+          </button>
+        `
+        )
         .join('');
 
       dropdown.querySelectorAll('.weather-location-item').forEach((item) => {
@@ -687,18 +676,23 @@
       const modal = document.getElementById('weatherLocationModal');
 
       if (trigger) {
-        trigger.addEventListener('click', () => {
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
           modal.classList.contains('active') ? closeWeatherLocationModal() : openWeatherLocationModal();
         });
       }
 
       if (modal) {
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            closeWeatherLocationModal();
-          }
+          e.stopPropagation();
         });
       }
+
+      document.addEventListener('click', (e) => {
+        if (modal && !modal.contains(e.target) && trigger && !trigger.contains(e.target)) {
+          closeWeatherLocationModal();
+        }
+      });
     }
 
     // Render weather widget using live API data.
