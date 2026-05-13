@@ -2108,6 +2108,7 @@ function renderProfileActions(profile, refreshProfile) {
     profileActions.innerHTML = `
       <a class="action-btn" href="settings.html">Edit Profile</a>
       <a class="action-btn secondary" href="connections.html?userId=${encodeURIComponent(profile.id)}">View Connections</a>
+      <a class="action-btn secondary" href="settings-role.html">Request Role</a>
     `;
     // If owner is also a seller, show a quick 'View Reviews' action
     if (profile.role === 'General Vendor' || profile.role === 'Verified Vendor') {

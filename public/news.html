@@ -541,6 +541,14 @@
       });
     });
 
+    // Wire up area selector to reload weather on change.
+    const areaSelect = document.getElementById('weatherAreaSelect');
+    if (areaSelect) {
+      areaSelect.addEventListener('change', () => {
+        loadWeather();
+      });
+    }
+
     // Render weather widget using live API data.
     async function loadWeather() {
       const container = document.getElementById('weatherContainer');
