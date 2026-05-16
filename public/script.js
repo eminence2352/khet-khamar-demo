@@ -1,6 +1,8 @@
 // ============================================
-// LANGUAGE + UI TEXT
+// SECTION 1: LANGUAGE + UI TEXT (INTERNATIONALIZATION)
 // ============================================
+// Handles multilingual support for UI labels and placeholders.
+// Currently configured for English. Easy to extend with additional languages.
 // Dictionary for multilingual UI text (currently English only)
 const dictionary = {
   en: {
@@ -53,8 +55,10 @@ function applyEnglishLanguage() {
 applyEnglishLanguage();
 
 // ============================================
-// AUTH STATE + SHARED HELPERS
+// SECTION 2: AUTHENTICATION STATE + SHARED HELPERS
 // ============================================
+// Core auth state management and reusable utility functions used across all pages.
+// Handles: user login status, current user profile, notifications, and common operations.
 // Global object to track current user authentication status
 const authState = {
   checked: false, // Whether we've already fetched auth status from server
@@ -180,7 +184,8 @@ async function getCurrentUserProfile(forceRefresh = false) {
   }
 }
 
-// FUNCTION: escapeHtml() - Escape HTML special characters to prevent injection
+// FUNCTION: escapeHtml() - Escape HTML special characters to prevent injection attacks
+// Converts: & < > " ' to their HTML entity equivalents
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -190,7 +195,8 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-// FUNCTION: getAvatarInitials() - Generate 2-letter avatar initials from name
+// FUNCTION: getAvatarInitials() - Generate 2-letter avatar initials from user name
+// Example: "John Smith" -> "JS", "Ali" -> "AL"
 function getAvatarInitials(name) {
   const safeName = String(name || "Anonymous User").trim();
   const parts = safeName.split(/\s+/).filter(Boolean);
@@ -206,7 +212,8 @@ function getAvatarInitials(name) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-// FUNCTION: formatRelativeTime() - Convert timestamp to relative time text (e.g., "5 minutes ago")
+// FUNCTION: formatRelativeTime() - Convert timestamp to human-readable relative time
+// Example: Date from 5 minutes ago -> "5 minutes ago", yesterday -> "1 days ago"
 function formatRelativeTime(dateValue) {
   const now = new Date();
   const postTime = new Date(dateValue);
@@ -230,17 +237,20 @@ function formatRelativeTime(dateValue) {
   return `${diffDays} days ago`;
 }
 
-// FUNCTION: profileUrlForUser() - Generate URL to visit a user's profile page
+// FUNCTION: profileUrlForUser() - Generate URL string to navigate to a user's profile page
+// Example: userId=5 -> "profile.html?userId=5"
 function profileUrlForUser(userId) {
   return `profile.html?userId=${encodeURIComponent(userId)}`;
 }
 
-// FUNCTION: feedPostUrl() - Generate URL to view a specific post on the feed
+// FUNCTION: feedPostUrl() - Generate URL string to navigate to a specific post on the feed
+// Example: postId=42 -> "index.html?postId=42"
 function feedPostUrl(postId) {
   return `index.html?postId=${encodeURIComponent(postId)}`;
 }
 
-// FUNCTION: formatRoleLabel() - Convert database role to display label (e.g., "Verified Expert" -> "Expert")
+// FUNCTION: formatRoleLabel() - Convert database role value to display-friendly label
+// Example: "verified expert" -> "Expert", "general vendor" -> "Seller"
 function formatRoleLabel(role) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "verified expert") {
@@ -252,6 +262,8 @@ function formatRoleLabel(role) {
   return role || "User";
 }
 
+// FUNCTION: copyTextToClipboard() - Copy text to user's clipboard
+// Tries modern navigator.clipboard API first, falls back to older execCommand method
 async function copyTextToClipboard(text) {
   const value = String(text || "").trim();
   if (!value) {
@@ -287,7 +299,42 @@ async function copyTextToClipboard(text) {
 
 // FUNCTION: renderPosts() - Generate HTML for feed posts and insert into container
 // Handles different post types (regular, news shares) with like/comment buttons
+// FEATURE: POST RENDERING
+// HTML Usage: <section class="feed-list" aria-label="Social feed"></section> in index.html
+// This function renders individual posts with like/comment/share/delete buttons
+// Each post HTML includes:
+//   .post-like-btn - Like button (feature: LIKE POSTS)
+//   .post-comment-btn - Comment button (feature: COMMENT ON POSTS)  
+//   .post-share-btn - Share button (feature: SHARE POSTS)
+//   .post-delete-btn - Delete button (feature: DELETE POSTS, requires #deleteModal)
+//   .post-edit-btn - Edit button (feature: EDIT POSTS, requires #editModal)
 function renderPosts(posts, container) {
+  // FEATURE: RENDER POST CARDS ===================================================
+  // HTML File: index.html
+  // Target Container: .feed-list (section element)
+  // 
+  // This function generates and renders individual post cards for all posts
+  // Each post card HTML includes these buttons/features:
+  //   • .post-like-btn - LIKE button (feature: LIKE POSTS)
+  //   • .post-comment-btn - COMMENT button (feature: COMMENT ON POSTS)
+  //   • .js-post-menu-btn - THREE-DOT MENU button (feature: SHARE/MORE OPTIONS)
+  //   • .js-edit-post - EDIT button (for post author only) - Opens #editModal
+  //   • .js-delete-post - DELETE button (for post author only) - Opens #deleteModal
+  // 
+  // Post card structure includes:
+  //   • Author info (avatar, name, role, location)
+  //   • Post text content
+  //   • Post image (if imagePath exists)
+  //   • Like count, comment count
+  //   • Formatted timestamp (e.g., "5 minutes ago")
+  //   • Comment panel (hidden by default, shown when user clicks .post-comment-btn)
+  // 
+  // Event Delegation:
+  //   • All button clicks are handled by delegated event listener on .feed-list
+  //   • Not individual event listeners on each post card (for performance)
+  // 
+  // Backend Data:
+  //   • Source: GET /api/posts (returns array of post objects)
   if (!container) {
     return;
   }
@@ -757,8 +804,22 @@ function renderMarketplaceAds(ads, marketplaceGrid) {
 }
 
 // ============================================
-// FEED PAGE
+// SECTION 3: FEED PAGE (HOMEPAGE)
 // ============================================
+// Initializes and manages the main feed page (index.html).
+// Functionality: Create posts with images, render feed, like/comment/delete posts,
+// handle image uploads to Cloudinary, show featured marketplace items, list connections.
+// 
+// FEATURES IN THIS SECTION:
+// • POST CREATION (Lines ~820-900): HTML elements: #createPostCard, #postText, .post-btn, #postPhoto | index.html
+// • IMAGE UPLOAD (Lines ~1180-1210): HTML elements: #postPhoto | Calls uploadToCloudinary() | index.html
+// • POST RENDERING (Lines ~1250-1330): HTML selectors: .feed-list | Calls renderPosts() | index.html
+// • LIKE POSTS (Lines ~1400-1450): Event: .post-like-btn click | HTML: rendered dynamically | index.html
+// • COMMENT ON POSTS (Lines ~1460-1520): Event: .post-comment-btn click | HTML: rendered dynamically | index.html
+// • DELETE POSTS (Lines ~1530-1590): Event: .post-delete-btn click | HTML: #deleteModal | index.html
+// • EDIT POSTS (Lines ~1600-1660): Event: .post-edit-btn click | HTML: #editModal | index.html
+// • MARKETPLACE ITEMS (Lines ~820-860): HTML element: #featuredMarketplaceList | index.html
+// • CONNECTIONS LIST (Lines ~870-920): HTML element: #homeConnectionsList | index.html
 function initFeedPage() {
   const feedList = document.querySelector(".feed-list");
   const featuredMarketplaceList = document.getElementById("featuredMarketplaceList");
@@ -1164,6 +1225,25 @@ function initFeedPage() {
   }
 
   if (postPhotoInput) {
+    // FEATURE: IMAGE UPLOAD FOR POSTS ==========================================
+    // HTML File: index.html
+    // HTML Elements:
+    //   • #postPhoto (file input) - User selects image file
+    //   • #postImagePreview (img) - Shows selected image preview
+    //   • #postImagePreviewWrap (div) - Container for preview
+    //   • #removePostImage (button) - Remove selected image
+    // 
+    // Flow:
+    //   1. User clicks "Add Photo" label (for #postPhoto)
+    //   2. File picker opens, user selects image
+    //   3. onChange event fires: setComposerImageFile(file)
+    //   4. Image preview shown in #postImagePreview
+    //   5. When user clicks .post-btn:
+    //      - Image uploaded to Cloudinary via uploadToCloudinary()
+    //      - Image URL stored in post database record
+    //      - Post rendered with image below post text
+    // 
+    // Related: uploadToCloudinary() function in SECTION 3
     postPhotoInput.addEventListener("change", () => {
       const selectedImageFile = postPhotoInput.files ? postPhotoInput.files[0] : null;
       setComposerImageFile(selectedImageFile);
@@ -1531,6 +1611,24 @@ function initFeedPage() {
   });
 
   if (postBtn && postTextInput) {
+    // FEATURE: POST CREATION =========================================================
+    // HTML File: index.html
+    // HTML Elements:
+    //   • #postText (textarea) - User enters post text
+    //   • #postPhoto (file input) - User selects image (optional)
+    //   • .post-btn (button) - User clicks to submit post
+    // 
+    // Flow:
+    //   1. User types text in #postText
+    //   2. User optionally selects image via #postPhoto
+    //   3. User clicks .post-btn
+    //   4. submitComposerPost() is called
+    //   5. If image exists, uploaded to /api/posts with FormData
+    //   6. Feed re-rendered with new post
+    // 
+    // Related Backend:
+    //   • POST /api/posts - Create new post
+    //   • Response includes postId, imagePath from Cloudinary
     postBtn.addEventListener("click", async () => {
       try {
         await submitComposerPost();
@@ -1548,7 +1646,7 @@ function initFeedPage() {
   const notificationList = document.getElementById('notificationList');
   const readAllBtn = document.getElementById('readAllBtn');
 
-  async function loadNotifications() {
+  async function loadNotifications({ refreshList = true } = {}) {
     const state = await getAuthState();
     if (!state.authenticated) {
       if (notificationToggle) notificationToggle.style.display = 'none';
@@ -1573,7 +1671,7 @@ function initFeedPage() {
         }
       }
 
-      if (!notificationList) return;
+      if (!refreshList || !notificationList) return;
       const rows = Array.isArray(data.notifications) ? data.notifications : [];
 
       const describeNotification = (notification) => {
@@ -1711,6 +1809,26 @@ function initFeedPage() {
 
   loadNotifications();
 
+  window.setInterval(() => {
+    if (document.hidden) {
+      return;
+    }
+
+    const refreshList = Boolean(notificationPanel && notificationPanel.style.display === 'block');
+    loadNotifications({ refreshList }).catch((err) => {
+      console.error('Background notification refresh failed', err);
+    });
+  }, 30000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const refreshList = Boolean(notificationPanel && notificationPanel.style.display === 'block');
+      loadNotifications({ refreshList }).catch((err) => {
+        console.error('Visibility notification refresh failed', err);
+      });
+    }
+  });
+
   if (navPostBtn) {
     navPostBtn.addEventListener("click", async (event) => {
       event.preventDefault();
@@ -1774,8 +1892,39 @@ function initFeedPage() {
 }
 
 // ============================================
-// MARKETPLACE PAGE
+// SECTION 4: MARKETPLACE PAGE
 // ============================================
+// Initializes and manages the marketplace page (marketplace.html).
+// Functionality: List products for sale, create new listings with images,
+// edit/delete own listings, search/filter marketplace items, upload product photos.
+// ============================================
+// SECTION 4: MARKETPLACE PAGE
+// ============================================
+// Initializes and manages the marketplace page (marketplace.html).
+// Functionality: List products for sale, create new listings with images,
+// edit/delete own listings, search/filter marketplace items, upload product photos.
+//
+// FEATURES IN THIS SECTION:
+// • MARKETPLACE LISTING CREATION: HTML elements: #marketplaceForm, #marketplaceProductName, #marketplacePrice | marketplace.html
+// • PRODUCT IMAGE UPLOAD: HTML element: #marketplacePhoto | Calls uploadToCloudinary() | marketplace.html
+// • MARKETPLACE GRID RENDERING: HTML element: #marketplaceList | marketplace.html
+// • EDIT MARKETPLACE ITEM: Event: .marketplace-edit-btn click | marketplace.html
+// • DELETE MARKETPLACE ITEM: Event: .marketplace-delete-btn click | marketplace.html
+// • SEARCH/FILTER: HTML element: #marketplaceSearchInput | marketplace.html
+// ============================================
+// SECTION 4: MARKETPLACE PAGE
+// ============================================
+// Initializes and manages the marketplace page (marketplace.html).
+// Functionality: List products for sale, create new listings with images,
+// edit/delete own listings, search/filter marketplace items, upload product photos.
+//
+// FEATURES IN THIS SECTION:
+// • MARKETPLACE LISTING CREATION: HTML elements: #marketplaceForm, #marketplaceProductName, #marketplacePrice | marketplace.html
+// • PRODUCT IMAGE UPLOAD: HTML element: #marketplacePhoto | Calls uploadToCloudinary() | marketplace.html
+// • MARKETPLACE GRID RENDERING: HTML element: #marketplaceList | marketplace.html
+// • EDIT MARKETPLACE ITEM: Event: .marketplace-edit-btn click | marketplace.html
+// • DELETE MARKETPLACE ITEM: Event: .marketplace-delete-btn click | marketplace.html
+// • SEARCH/FILTER: HTML element: #marketplaceSearchInput | marketplace.html
 function initMarketplacePage() {
   const marketplaceGrid = document.querySelector(".market-grid");
   if (!marketplaceGrid) {
@@ -2366,8 +2515,39 @@ function renderOutgoingRequestList(container, rows, onCancel) {
 }
 
 // ============================================
-// PROFILE PAGE
+// SECTION 5: PROFILE PAGE
 // ============================================
+// Initializes and manages the user profile page (profile.html).
+// Functionality: Display user info, show user's posts, liked posts, commented posts,
+// manage role requests, handle follow/unfollow, edit own profile details.
+// ============================================
+// SECTION 5: PROFILE PAGE
+// ============================================
+// Initializes and manages the user profile page (profile.html).
+// Functionality: Display user info, show user's posts, liked posts, commented posts,
+// manage role requests, handle follow/unfollow, edit own profile details.
+//
+// FEATURES IN THIS SECTION:
+// • USER PROFILE DISPLAY: HTML elements: #profileHeader, #profileUserName, #profileUserRole | profile.html
+// • USER POSTS LISTING: HTML element: #profilePostsList | profile.html
+// • LIKED POSTS LISTING: HTML element: #profileLikedPostsList | profile.html
+// • COMMENTED POSTS LISTING: HTML element: #profileCommentedPostsList | profile.html
+// • FOLLOW/UNFOLLOW: Event: #followBtn click | HTML: profile.html
+// • ROLE REQUEST BUTTON: Event: #roleRequestBtn click | HTML: profile.html
+// ============================================
+// SECTION 5: PROFILE PAGE
+// ============================================
+// Initializes and manages the user profile page (profile.html).
+// Functionality: Display user info, show user's posts, liked posts, commented posts,
+// manage role requests, handle follow/unfollow, edit own profile details.
+//
+// FEATURES IN THIS SECTION:
+// • USER PROFILE DISPLAY: HTML elements: #profileHeader, #profileUserName, #profileUserRole | profile.html
+// • USER POSTS LISTING: HTML element: #profilePostsList | profile.html
+// • LIKED POSTS LISTING: HTML element: #profileLikedPostsList | profile.html
+// • COMMENTED POSTS LISTING: HTML element: #profileCommentedPostsList | profile.html
+// • FOLLOW/UNFOLLOW: Event: #followBtn click | HTML: profile.html
+// • ROLE REQUEST BUTTON: Event: #roleRequestBtn click | HTML: profile.html
 async function initProfilePage() {
   const profileRoot = document.getElementById("profilePage");
   if (!profileRoot) {
@@ -2661,8 +2841,20 @@ async function initProfilePage() {
 }
 
 // ============================================
-// SETTINGS PAGES
+// SECTION 6: SETTINGS PAGES
 // ============================================
+// Initializes settings pages (settings.html, settings-password.html, settings-role.html).
+// Functionality: Change password, request role (Farmer → Supplier), manage account preferences.
+// ============================================
+// SECTION 6: SETTINGS PAGES
+// ============================================
+// Initializes settings pages (settings.html, settings-password.html, settings-role.html).
+// Functionality: Change password, request role (Farmer → Supplier), manage account preferences.
+//
+// FEATURES:
+// • CHANGE PASSWORD: HTML elements: #currentPassword, #newPassword, #confirmPassword | settings-password.html
+// • REQUEST ROLE: HTML elements: #roleSelect, #roleRequestReason | settings-role.html
+// • ACCOUNT SETTINGS: HTML elements: various input fields | settings.html
 async function initSettingsHomePage() {
   const settingsHome = document.getElementById("settingsHomePage");
   if (!settingsHome) {
@@ -2727,6 +2919,10 @@ async function initChangePasswordPage() {
   });
 }
 
+// FEATURE: REQUEST ROLE (Farmer → Supplier)
+// HTML File: settings-role.html
+// HTML Elements: #roleSelect, #roleRequestReason, #roleRequestForm
+// Functionality: User selects desired role in #roleSelect dropdown → enters reason in #roleRequestReason → submits form
 async function initRoleRequestPage() {
   const roleRequestPage = document.getElementById("roleRequestPage");
   if (!roleRequestPage) {
@@ -2805,6 +3001,12 @@ async function initRoleRequestPage() {
   await loadRoleRequestStatus();
 }
 
+// ============================================
+// SECTION 7: PAGE INITIALIZATION ON LOAD
+// ============================================
+// Automatically initialize all page modules based on which page is currently loaded.
+// Each init function checks if its required DOM elements exist before running.
+// This ensures the script works on all pages without errors.
 initFeedPage();
 initMarketplacePage();
 initProfilePage();

@@ -17,6 +17,48 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-lang="en">
+  <!-- 
+  ================================================================================
+  REQUEST ROLE PAGE (settings-role.html)
+  ================================================================================
+  FEATURE: REQUEST ROLE CHANGE (Farmer → Supplier → Expert)
+  
+  HTML Elements:
+    • #desiredRole or #roleSelect (select dropdown) - User selects desired role
+      Options: "general vendor" (Seller), "verified expert" (Expert), etc.
+    • #roleRequestReason (textarea) - User explains why they want this role
+    • #roleRequestForm (form) - Form containing all fields
+    • #roleRequestStatus (div) - Shows current role request status
+    • Submit button on form
+  
+  User Flow:
+    1. User opens settings-role.html
+    2. Page fetches current role request status from /api/settings/role-request
+    3. If user has pending request, #roleRequestStatus shows: "Latest request: Supplier (pending)"
+    4. User selects desired role from #desiredRole dropdown
+    5. User enters reason in #roleRequestReason (e.g., "I have 10 years of farming experience")
+    6. User clicks submit
+    7. POST /api/settings/role-request sent with desiredRole and reason
+    8. Request goes to admin for approval
+    9. #roleRequestStatus updated with new request
+  
+  Role Types:
+    • "farmer" → Can only post and comment
+    • "general vendor" (Seller) → Can also sell products in marketplace
+    • "verified expert" (Expert) → Can provide expert advice, higher visibility
+  
+  Related JavaScript Handler:
+    • initRoleRequestPage() in public/script.js (SECTION 6, Line 2944)
+    • Event listener on #roleRequestForm submit (Line 2984)
+  
+  Related Backend Routes:
+    • POST /api/settings/role-request
+      Request: { desiredRole, reason }
+      Response: { success: true/false, message: "..." }
+    • GET /api/settings/role-request
+      Response: { latestRequest: { desiredRole, status, createdAt } or null }
+  ===============================================================================
+  -->
   <header class="top-header">
     <div class="logo-block">
       <p class="logo-kicker">Farmer Community</p>

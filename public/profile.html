@@ -17,6 +17,109 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-lang="en">
+  <!-- 
+  ================================================================================
+  PROFILE PAGE (profile.html)
+  ================================================================================
+  FEATURES IN THIS PAGE:
+  
+  1) USER PROFILE DISPLAY
+     HTML Elements:
+       • #profileHeader - Top section with user avatar, name, role
+       • #profileUserName - User's full name
+       • #profileUserRole - User's role badge (e.g., "Farmer", "Supplier", "Expert")
+       • #profileLocation - User's district location
+       • #profileBio - User's bio/description
+     
+     Data Source:
+       • Backend: GET /api/profile/:userId - Fetch user profile info
+     
+     User Flow:
+       1. User opens profile.html?userId=X
+       2. Page fetches user profile from GET /api/profile/:userId
+       3. Avatar, name, role, location displayed in header
+  
+  2) FOLLOW / UNFOLLOW (for other users)
+     HTML Elements:
+       • #followBtn - Button to follow/unfollow user
+     
+     User Flow:
+       1. If viewing another user's profile, #followBtn visible
+       2. User clicks #followBtn
+       3. POST /api/profile/:userId/follow toggles follow state
+       4. Button text changes: "Follow" ↔ "Unfollow"
+     
+     Backend:
+       • POST /api/profile/:userId/follow - Toggle follow relationship
+  
+  3) USER'S POSTS SECTION
+     HTML Elements:
+       • #profilePostsTab - Tab to view user's posts
+       • #profilePostsList - Container for user's posts
+       • Posts rendered with like/comment/delete buttons
+     
+     User Flow:
+       1. User clicks #profilePostsTab
+       2. Fetch GET /api/profile/:userId/posts
+       3. Posts displayed in #profilePostsList
+       4. Each post has like/comment buttons
+       5. Delete button only visible if viewing own profile
+     
+     Backend:
+       • GET /api/profile/:userId/posts - Fetch user's posts
+  
+  4) LIKED POSTS SECTION (Own Profile Only)
+     HTML Elements:
+       • #profileLikedPostsTab - Tab to view liked posts
+       • #profileLikedPostsList - Container for liked posts
+     
+     User Flow:
+       1. If viewing own profile, #profileLikedPostsTab visible
+       2. User clicks tab
+       3. Fetch liked posts
+       4. Liked posts displayed
+     
+     Backend:
+       • GET /api/profile/me/liked-posts or similar
+  
+  5) COMMENTED POSTS SECTION (Own Profile Only)
+     HTML Elements:
+       • #profileCommentedPostsTab - Tab to view commented posts
+       • #profileCommentedPostsList - Container for commented posts
+     
+     User Flow:
+       1. If viewing own profile, #profileCommentedPostsTab visible
+       2. User clicks tab
+       3. Fetch commented posts
+       4. Commented posts displayed
+  
+  6) ROLE REQUEST SECTION (Own Profile Only)
+     HTML Elements:
+       • #roleRequestBtn - Button to request role change
+       • #roleRequestForm or link to settings-role.html
+     
+     User Flow:
+       1. If viewing own profile, #roleRequestBtn visible
+       2. User clicks #roleRequestBtn
+       3. Navigates to settings-role.html or opens modal
+       4. User selects desired role (Farmer → Supplier, etc.)
+       5. Request submitted to admin
+     
+     Backend:
+       • POST /api/settings/role-request - Submit role request
+  
+  RELATED JAVASCRIPT:
+    • Handler: initProfilePage() in public/script.js (SECTION 5, Line 2440)
+    • Post rendering: renderPosts() function (shared)
+  
+  RELATED BACKEND ROUTES:
+    • GET /api/profile/:userId - Fetch user profile
+    • GET /api/profile/:userId/posts - Fetch user's posts
+    • POST /api/profile/:userId/follow - Toggle follow
+    • GET /api/profile/me/liked-posts - Fetch own liked posts
+    • POST /api/settings/role-request - Request role change
+  ===============================================================================
+  -->
   <header class="top-header">
     <div class="logo-block">
       <p class="logo-kicker">Farmer Community</p>

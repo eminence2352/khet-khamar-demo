@@ -17,6 +17,100 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-lang="en">
+  <!-- 
+  ================================================================================
+  MARKETPLACE PAGE (marketplace.html)
+  ================================================================================
+  FEATURES IN THIS PAGE:
+  
+  1) PRODUCT LISTING & BROWSING
+     HTML Elements:
+       • #marketplaceList - Grid container for all product cards
+       • .marketplace-card - Individual product card (dynamically generated)
+       • .marketplace-title, .marketplace-price, .marketplace-seller - Product info
+       • .marketplace-image - Product image (from Cloudinary)
+     
+     User Flow:
+       1. User opens marketplace.html
+       2. Page loads all products from GET /api/marketplace
+       3. Products displayed in grid layout
+       4. User can view product details, price, seller info
+     
+     Backend:
+       • GET /api/marketplace - Fetch all product listings
+  
+  2) CREATE NEW LISTING
+     HTML Elements:
+       • #marketplaceForm - Product creation form
+       • #marketplaceProductName - Input for product name
+       • #marketplacePrice - Input for product price
+       • #marketplaceDescription - Input for product description
+       • #marketplacePhoto - File input for product image
+       • .marketplace-create-btn - Submit button
+     
+     User Flow:
+       1. User fills #marketplaceProductName, #marketplacePrice, #marketplaceDescription
+       2. User optionally selects image via #marketplacePhoto
+       3. User clicks .marketplace-create-btn
+       4. Image uploaded to Cloudinary (if selected)
+       5. POST /api/marketplace creates product with image URL
+       6. Product appears in #marketplaceList
+     
+     Backend:
+       • POST /api/marketplace - Create new product listing
+       • Image uploaded via Cloudinary API (env vars: CLOUDINARY_CLOUD_NAME, etc.)
+  
+  3) EDIT LISTING (Owner Only)
+     HTML Elements:
+       • .marketplace-edit-btn - Edit button (only visible for product owner)
+       • #editMarketplaceModal - Modal for editing product
+       • Related inputs for product name, price, description
+     
+     User Flow:
+       1. User clicks .marketplace-edit-btn on their own product
+       2. Edit modal appears with current product data
+       3. User modifies fields
+       4. User clicks save
+       5. PATCH /api/marketplace/:productId updates product
+     
+     Backend:
+       • PATCH /api/marketplace/:id - Update product listing
+  
+  4) DELETE LISTING (Owner Only)
+     HTML Elements:
+       • .marketplace-delete-btn - Delete button (only visible for product owner)
+       • Delete confirmation modal
+     
+     User Flow:
+       1. User clicks .marketplace-delete-btn on their own product
+       2. Confirmation dialog appears
+       3. User confirms delete
+       4. DELETE /api/marketplace/:productId removes product
+     
+     Backend:
+       • DELETE /api/marketplace/:id - Delete product listing
+  
+  5) SEARCH & FILTER (if implemented)
+     HTML Elements:
+       • #marketplaceSearchInput - Search box
+       • Filter buttons or dropdowns
+     
+     Functionality:
+       • User types in search box → matches product names/descriptions
+       • Products filtered in real-time
+  
+  RELATED JAVASCRIPT:
+    • Handler: initMarketplacePage() in public/script.js (SECTION 4, Line 1845)
+    • Image upload: uploadToCloudinary() function
+    • Post rendering: renderPosts() function (shared)
+  
+  RELATED BACKEND ROUTES:
+    • GET /api/marketplace - Fetch all listings
+    • POST /api/marketplace - Create listing
+    • PATCH /api/marketplace/:id - Edit listing
+    • DELETE /api/marketplace/:id - Delete listing
+  ===============================================================================
+  -->
   <header class="top-header">
     <div class="logo-block">
       <p class="logo-kicker" data-i18n="appTagline">Farmer Community</p>

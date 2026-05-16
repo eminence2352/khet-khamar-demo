@@ -65,6 +65,7 @@
       display: inline-block;
       z-index: 10;
     }
+    /* FEATURE: WEATHER LOCATION SELECTOR - Handled by setupWeatherLocationModal() in script.js */
 
     .weather-location-btn-select {
   background: rgba(255, 255, 255, 0.2);
@@ -508,6 +509,78 @@
 </head>
 
 <body data-lang="en">
+  <!-- 
+  ================================================================================
+  NEWS & WEATHER PAGE (news.html)
+  ================================================================================
+  FEATURES IN THIS PAGE:
+  
+  1) WEATHER LOCATION SELECTOR
+     HTML Elements:
+       • #weatherLocationTrigger - Green button showing "📍 {location} ▼"
+       • #weatherLocationModal - Dropdown container (position: absolute below button)
+       • .weather-location-item - Individual location buttons (6 total)
+       • #currentWeatherArea - Text showing current selected location
+     
+     Related CSS:
+       • .weather-location-selector (line 129) - Container wrapper
+       • .weather-location-modal.active (line 104) - Dropdown open state
+       • .weather-location-item.active (line 122) - Highlighted selected location
+     
+     JavaScript Handlers (embedded inline in news.html):
+       • setupWeatherLocationModal() - Initialize event listeners
+       • openWeatherLocationModal() / closeWeatherLocationModal() - Toggle dropdown
+       • renderWeatherLocationDropdown() - Populate dropdown with location options
+     
+     User Flow:
+       1. User opens news.html
+       2. Sees green button showing "📍 Dhaka ▼" (or current location)
+       3. User clicks button → dropdown opens showing 6 location options
+       4. User clicks location (e.g., "Gazipur") → weather card updates → dropdown closes
+       5. #currentWeatherArea text changes to "Gazipur"
+       6. Weather data fetched from /api/weather?area=Gazipur&days=14
+     
+     Backend:
+       • GET /api/weather?area={location}&days=14 - Fetch weather forecast
+       • Fallback: If API fails, generates synthetic weather data
+  
+  2) WEATHER FORECAST DISPLAY
+     HTML Elements:
+       • #weatherContainer - Container for weather card(s)
+       • .weather-card - Individual weather card (dynamically generated)
+       • .weather-title - Location name (e.g., "Dhaka Weather Outlook")
+       • .weather-temp - Current temperature
+       • .forecast-grid - Grid of 14-day forecast cards
+     
+     Data Source:
+       • Backend: GET /api/weather endpoint
+       • Returns: { area, current: {...}, forecast: [{...}, ...] }
+     
+     Displayed Info:
+       • Current: Temperature, Condition, Humidity, Wind Speed, Rainfall
+       • Forecast (14 days): Max/Min temp, Condition, Rainfall, Wind Speed
+  
+  3) AGRICULTURAL NEWS
+     HTML Elements:
+       • #newsContainer - Container for news articles
+       • .news-card - Individual news article (dynamically generated)
+       • .news-title, .news-desc, .news-source - Article content
+     
+     Data Source:
+       • Backend: GET /api/news endpoint
+       • Returns: Array of news articles
+  
+  SUMMARY OF FEATURES:
+    ✓ Weather Location Selector (green button with dropdown)
+    ✓ 14-day Weather Forecast Display
+    ✓ Agricultural News Feed
+  
+  RELATED BACKEND ROUTES:
+    • GET /api/weather?area={location}&days=14
+    • GET /api/news
+    • POST /api/news/share
+  ===============================================================================
+  -->
   <header class="top-header">
     <div class="logo-block">
       <p class="logo-kicker" data-i18n="appTagline">Farmer Community</p>

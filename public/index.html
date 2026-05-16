@@ -86,6 +86,7 @@
         </div>
 
         <!-- Post Creation Section (Hidden for guests) -->
+        <!-- FEATURE: POST CREATION - Handled by initFeedPage() and postBtn click handler in script.js (SECTION 3, ~Line 759) -->
         <section id="createPostCard" class="create-post-card" aria-label="Create post section">
           <div class="create-post-top">
             <div class="avatar avatar-owner">AK</div>
@@ -103,6 +104,7 @@
             <button id="removePostImage" class="composer-image-remove" type="button">Remove image</button>
           </div>
           <div class="create-post-actions">
+            <!-- FEATURE: IMAGE UPLOAD - Handled by postPhoto input and uploadToCloudinary() in script.js (SECTION 3) -->
             <label for="postPhoto" class="camera-upload" data-i18n="addPhoto">
               <i class="fa-solid fa-camera"></i>
               Add Photo
@@ -112,11 +114,17 @@
               <input id="isHelpRequest" type="checkbox" />
               <span data-i18n="askingForHelp">This is a help request</span>
             </label>
+            <!-- FEATURE: SUBMIT POST - Handled by .post-btn click handler in script.js (SECTION 3, Lines ~820-900) -->
             <button class="post-btn" type="button" data-i18n="postBtn">Post</button>
           </div>
         </section>
 
         <!-- Social Feed -->
+        <!-- FEATURE: POST RENDERING - Posts rendered by renderPosts() function in script.js (SECTION 3, SECTION 2) -->
+        <!-- FEATURE: LIKE POSTS - Each post has .post-like-btn handled by click listener in script.js (SECTION 3) -->
+        <!-- FEATURE: COMMENT ON POSTS - Each post has .post-comment-btn handled by click listener in script.js (SECTION 3) -->
+        <!-- FEATURE: DELETE POSTS - Each post has .post-delete-btn handled by click listener in script.js (SECTION 3) -->
+        <!-- FEATURE: SHARE POST - Each post has .post-share-btn handled by click listener in script.js (SECTION 3) -->
         <section class="feed-list" aria-label="Social feed"></section>
       </div>
 
@@ -135,6 +143,7 @@
   </main>
 
   <!-- Edit Modal -->
+  <!-- FEATURE: EDIT POSTS - Handled by editModal element and edit button click in script.js (SECTION 3) -->
   <div id="editModal" class="modal" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -152,6 +161,7 @@
   </div>
 
   <!-- Delete Confirmation Modal -->
+  <!-- FEATURE: DELETE POSTS - Handled by deleteModal element and delete button click in script.js (SECTION 3) -->
   <div id="deleteModal" class="modal" style="display: none;">
     <div class="modal-content modal-content-small">
       <div class="modal-header">
